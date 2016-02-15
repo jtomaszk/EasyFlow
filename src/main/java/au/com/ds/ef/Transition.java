@@ -1,6 +1,10 @@
 package au.com.ds.ef;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * User: andrey
@@ -13,6 +17,7 @@ public final class Transition {
     private StateEnum stateFrom;
     private StateEnum stateTo;
     private boolean isFinal;
+    private List<Transition> defaultTransitions = null;
 
     public Transition(EventEnum event, StateEnum stateFrom, StateEnum stateTo) {
         this.event = event;
@@ -28,17 +33,24 @@ public final class Transition {
         this.isFinal = isFinal;
     }
 
-    protected Transition(EventEnum event, StateEnum stateTo, boolean isFinal) {
+    protected Transition(EventEnum event, StateEnum stateTo, boolean isFinal, List<Transition> dt) {
         this.event = event;
         this.stateTo = stateTo;
         this.isFinal = isFinal;
+
+        if(dt!=null){
+            this.defaultTransitions = dt.stream()
+                    .map( t-> new Transition(t.getEvent(), t.getStateTo(), t.isFinal, null))
+                    .collect(Collectors.toList());
+        }
+
         register(this);
     }
 
     private static void register(Transition transition) {
         List<Transition> list = transitions.get();
         if (list == null) {
-            list = new ArrayList<Transition>();
+            list = new ArrayList<>();
             transitions.set(list);
         }
         list.add(transition);
@@ -65,8 +77,15 @@ public final class Transition {
     }
 
     public Transition transit(Transition... transitions) {
-        for (Transition transition : transitions) {
-            transition.setStateFrom(stateTo);
+
+        if (this.defaultTransitions!=null){
+
+            Stream.concat(Arrays.stream(transitions), defaultTransitions.stream())
+                    .forEach(t -> t.setStateFrom(stateTo));
+        } else {
+            for (Transition transition : transitions) {
+                transition.setStateFrom(stateTo);
+            }
         }
 
         return this;
@@ -75,10 +94,10 @@ public final class Transition {
     @Override
     public String toString() {
         return "Transition{" +
-            "event=" + event +
-            ", stateFrom=" + stateFrom +
-            ", stateTo=" + stateTo +
-            '}';
+                "event=" + event +
+                ", stateFrom=" + stateFrom +
+                ", stateTo=" + stateTo +
+                '}';
     }
 
     @Override

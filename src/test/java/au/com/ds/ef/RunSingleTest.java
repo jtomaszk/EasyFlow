@@ -10,6 +10,8 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static au.com.ds.ef.FlowBuilder.from;
 import static au.com.ds.ef.FlowBuilder.fromTransitions;
@@ -80,7 +82,7 @@ public class RunSingleTest {
                 )
 		    );
 
-		final List<Integer> actualOrder = new ArrayList<Integer>();
+		final Queue<Integer> actualOrder = new LinkedBlockingQueue<Integer>();
 
         flow
 		    .whenEnter(START, new ContextHandler<StatefulContext>() {
