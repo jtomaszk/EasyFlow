@@ -14,8 +14,7 @@ public class StatefulContext implements Serializable {
 	
 	private final String id;
     private EasyFlow flow;
-	private StateEnum state;
-    private EventEnum lastEvent;
+	private final AtomicReference<StateEnum> state = new AtomicReference<>();
 	private final AtomicBoolean terminated = new AtomicBoolean(false);
 	private final AtomicBoolean stopped = new AtomicBoolean(false);
 	private final CountDownLatch completionLatch = new CountDownLatch(1);
@@ -31,14 +30,23 @@ public class StatefulContext implements Serializable {
 	public String getId() {
 		return id;
 	}
-	
-	public void setState(StateEnum state){
-		this.state = state;
-	}
-	
-	public StateEnum getState() {
-		return state;
-	}
+
+    public void setState(StateEnum state) {
+        this.state.set(state);
+    }
+
+    public boolean casState(StateEnum expectedState, StateEnum targetState) {
+        if (expectedState != null) {
+            return this.state.compareAndSet(expectedState, targetState);
+        }else{
+            setState(targetState);
+            return true;
+        }
+    }
+
+    public StateEnum getState() {
+        return state.get();
+    }
 
 	@Override
 	public int hashCode() {
@@ -72,6 +80,10 @@ public class StatefulContext implements Serializable {
         return flow.safeTrigger(event, this);
     }
 
+    public boolean conditionTrigger(EventEnum event, StateEnum condition) throws LogicViolationError {
+        return flow.conditionTrigger(event, this, condition);
+    }
+
     public void trigger(EventEnum event) throws LogicViolationError {
         flow.trigger(event, this);
     }
@@ -101,16 +113,8 @@ public class StatefulContext implements Serializable {
 		this.completionLatch.countDown();
 	}
 
-    public EventEnum getLastEvent() {
-        return lastEvent;
-    }
-
-    void setLastEvent(EventEnum lastEvent) {
-        this.lastEvent = lastEvent;
-    }
-
     public List<Transition> getAvailableTransitions() {
-        return flow.getAvailableTransitions(state);
+        return flow.getAvailableTransitions(state.get());
     }
 
     protected void awaitTermination() {

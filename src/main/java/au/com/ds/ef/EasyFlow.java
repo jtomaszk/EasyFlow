@@ -72,19 +72,22 @@ public class EasyFlow<C extends StatefulContext> {
     }
 
     protected void setCurrentState(final StateEnum state, final boolean enterInitialState, final C context) {
-        execute(new Runnable() {
-            @Override
-            public void run() {
-                if (!enterInitialState) {
-                    StateEnum prevState = context.getState();
-                    if (prevState != null) {
-                        leave(prevState, context);
-                    }
-                }
+        transit(null, state, enterInitialState, context);
+    }
 
-                context.setState(state);
-                enter(state, context);
+    protected void transit(final StateEnum condition, final StateEnum targetState, final boolean enterInitialState, final C context) {
+        execute(() -> {
+            if (!enterInitialState) {
+                StateEnum prevState = context.getState();
+                if (prevState != null) {
+                    leave(prevState, context);
+                }
             }
+
+            if(context.casState(condition, targetState)) {
+                enter(targetState, context);
+            }
+
         }, context);
     }
 
@@ -135,7 +138,7 @@ public class EasyFlow<C extends StatefulContext> {
     }
 
     public void waitForCompletion(C context) {
-      context.awaitTermination();
+        context.awaitTermination();
     }
 
     public <C1 extends StatefulContext> EasyFlow<C1> executor(Executor executor) {
@@ -153,18 +156,6 @@ public class EasyFlow<C extends StatefulContext> {
         return (EasyFlow<C1>) this;
     }
 
-    public boolean safeTrigger(final EventEnum event, final C context) {
-        try {
-            return trigger(event, true, context);
-        } catch (LogicViolationError logicViolationError) {
-            return false;
-        }
-    }
-
-    public void trigger(final EventEnum event, final C context) throws LogicViolationError {
-        trigger(event, false, context);
-    }
-
     public List<Transition> getAvailableTransitions(StateEnum stateFrom) {
         return transitions.getTransitions(stateFrom);
     }
@@ -175,8 +166,28 @@ public class EasyFlow<C extends StatefulContext> {
         }
         return false;
     }
+    public void trigger(final EventEnum event, final C context) throws LogicViolationError {
+        trigger(event, context, null, false);
+    }
 
-    private boolean trigger(final EventEnum event, final boolean safe, final C context) throws LogicViolationError {
+    public boolean safeTrigger(final EventEnum event, final C context) {
+        try {
+            return trigger(event, context, null, true);
+        } catch (LogicViolationError logicViolationError) {
+            return false;
+        }
+    }
+    public boolean conditionTrigger(final EventEnum event, final C context, final StateEnum condition) throws LogicViolationError {
+        return trigger(event, context, condition, false);
+    }
+
+    /**
+     * Concurrent modification of state can cause situation when event and leave handlers are invoked but not enter handlers.
+     * If conditional state do not match current, no handlers will be invoked
+     */
+    private boolean trigger(final EventEnum event, final C context, final StateEnum condition, final boolean safe)
+            throws LogicViolationError {
+
         if (context.isTerminated()) {
             return false;
         }
@@ -184,31 +195,31 @@ public class EasyFlow<C extends StatefulContext> {
         final StateEnum stateFrom = context.getState();
         final Transition transition = transitions.getTransition(stateFrom, event);
 
+        if (condition!=null && stateFrom != condition) {
+            return false;
+        }
+
         if (transition != null) {
-            execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        StateEnum stateTo = transition.getStateTo();
-                        if (isTrace())
-                            log.info("when triggered %s in %s for %s <<<", event, stateFrom, context);
+            execute(() -> {
+                try {
+                    StateEnum stateTo = transition.getStateTo();
+                    if (isTrace())
+                        log.info("when triggered %s in %s for %s <<<", event, stateFrom, context);
 
-                        handlers.callOnEventTriggered(event, stateFrom, stateTo, context);
-                        context.setLastEvent(event);
+                    handlers.callOnEventTriggered(event, stateFrom, stateTo, context);
 
-                        if (isTrace())
-                            log.info("when triggered %s in %s for %s >>>", event, stateFrom, context);
+                    if (isTrace())
+                        log.info("when triggered %s in %s for %s >>>", event, stateFrom, context);
 
-                        setCurrentState(stateTo, false, context);
-                    } catch (Exception e) {
-                        doOnError(new ExecutionError(stateFrom, event, e,
+                    transit(condition, stateTo, false, context);
+                } catch (Exception e) {
+                    doOnError(new ExecutionError(stateFrom, event, e,
                             "Execution Error in [trigger]", context));
-                    }
                 }
             }, context);
-        } else if (!safe){
+        } else if (!safe) {
             throw new LogicViolationError("Invalid Event: " + event +
-                " triggered while in State: " + context.getState() + " for " + context);
+                    " triggered while in State: " + context.getState() + " for " + context);
         }
 
         return transition != null;
@@ -234,7 +245,7 @@ public class EasyFlow<C extends StatefulContext> {
             }
         } catch (Exception e) {
             doOnError(new ExecutionError(state, null, e,
-                "Execution Error in [whenEnter] handler", context));
+                    "Execution Error in [whenEnter] handler", context));
         }
     }
 
@@ -253,7 +264,7 @@ public class EasyFlow<C extends StatefulContext> {
                 log.info("when leave %s for %s >>>", state, context);
         } catch (Exception e) {
             doOnError(new ExecutionError(state, null, e,
-                "Execution Error in [whenLeave] handler", context));
+                    "Execution Error in [whenLeave] handler", context));
         }
     }
 
