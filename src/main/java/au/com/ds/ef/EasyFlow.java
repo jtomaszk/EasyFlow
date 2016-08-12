@@ -10,6 +10,7 @@ import au.com.ds.ef.err.LogicViolationError;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.stream.Collectors;
 
 import static au.com.ds.ef.HandlerCollection.EventType;
 
@@ -43,7 +44,11 @@ public class EasyFlow<C extends StatefulContext> {
     }
 
     protected void processAllTransitions(boolean skipValidation) {
-        transitions = new TransitionCollection(Transition.consumeTransitions(), !skipValidation);
+        List<Transition> cTransitions = Transition.consumeTransitions();
+        if (cTransitions != null) {
+            cTransitions = cTransitions.stream().filter(t -> t.getStateFrom() != null).collect(Collectors.toList());
+        }
+        transitions = new TransitionCollection(cTransitions, !skipValidation);
     }
 
     protected void setTransitions(Collection<Transition> collection, boolean skipValidation) {

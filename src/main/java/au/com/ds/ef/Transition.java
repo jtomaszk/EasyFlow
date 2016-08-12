@@ -80,8 +80,7 @@ public final class Transition {
 
         if (this.defaultTransitions!=null){
 
-            Stream.concat(Arrays.stream(transitions), defaultTransitions.stream())
-                    .forEach(t -> t.setStateFrom(stateTo));
+            composeTransitions(defaultTransitions, transitions).forEach(t -> t.setStateFrom(stateTo));
         } else {
             for (Transition transition : transitions) {
                 transition.setStateFrom(stateTo);
@@ -89,6 +88,17 @@ public final class Transition {
         }
 
         return this;
+    }
+
+    private Stream<Transition> composeTransitions(List<Transition> dtList, Transition[] transitions) {
+
+        return Stream.concat(
+                Arrays.stream(transitions),
+                dtList.stream().filter(dt -> !isOverridePresent(dt, transitions)));
+    }
+
+    private boolean isOverridePresent(Transition dt, Transition[] transitions) {
+        return Arrays.stream(transitions).filter(t -> t.getEvent()==dt.getEvent()).findFirst().isPresent();
     }
 
     @Override

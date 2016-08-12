@@ -34,10 +34,6 @@ public class FlowBuilder<C extends StatefulContext> {
     }
 
     private FlowBuilder(StateEnum startState) {
-        this(startState, null);
-    }
-
-    private FlowBuilder(StateEnum startState, List<Transition> defaultTransitions) {
         this.flow = new EasyFlow<C>(startState);
     }
 
@@ -50,7 +46,7 @@ public class FlowBuilder<C extends StatefulContext> {
 
         defaultTransitions.set(dt);
 
-        return new FlowBuilder<C>(startState, dt);
+        return new FlowBuilder<C>(startState);
     }
 
     public static <C extends StatefulContext> EasyFlow<C> fromTransitions(
@@ -67,7 +63,7 @@ public class FlowBuilder<C extends StatefulContext> {
     public <C1 extends StatefulContext> EasyFlow<C1> transit(Transition... transitions) {
 
         if(defaultTransitions.get()!=null){
-            return transit(false, this.defaultTransitions.get(), transitions);
+            return transit(false, defaultTransitions.get(), transitions);
         }else{
             return transit(false, transitions);
         }
@@ -76,14 +72,24 @@ public class FlowBuilder<C extends StatefulContext> {
     public <C1 extends StatefulContext> EasyFlow<C1> transit(
             boolean skipValidation,List<Transition> dt, Transition... transitions) {
 
-        Stream.concat(Arrays.stream(transitions), dt.stream())
-                .forEach( t -> t.setStateFrom(flow.getStartState()));
+        composeTransitions(dt, transitions).forEach( t -> t.setStateFrom(flow.getStartState()));
 
         flow.processAllTransitions(skipValidation);
 
         defaultTransitions.remove();
 
         return (EasyFlow<C1>) flow;
+    }
+
+    private Stream<Transition> composeTransitions(List<Transition> dtList, Transition[] transitions) {
+
+        return Stream.concat(
+                Arrays.stream(transitions),
+                dtList.stream().filter(dt -> !isOverridePresent(dt, transitions)));
+    }
+
+    private boolean isOverridePresent(Transition dt, Transition[] transitions) {
+        return Arrays.stream(transitions).filter(t -> t.getEvent()==dt.getEvent()).findFirst().isPresent();
     }
 
     public <C1 extends StatefulContext> EasyFlow<C1> transit(boolean skipValidation, Transition... transitions) {
