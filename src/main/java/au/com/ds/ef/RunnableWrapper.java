@@ -3,7 +3,11 @@ package au.com.ds.ef;
 public class RunnableWrapper implements Runnable {
 
     private final RunnableWrapperStatement runnableWrapperStatement;
-    private Runnable runnableMethod;
+    private Runnable runnable;
+
+    public RunnableWrapper(RunnableWrapper other) {
+        this.runnableWrapperStatement = other.runnableWrapperStatement;
+    }
 
     public RunnableWrapper(RunnableWrapperStatement runnableWrapperStatement) {
         this.runnableWrapperStatement = runnableWrapperStatement;
@@ -11,14 +15,14 @@ public class RunnableWrapper implements Runnable {
 
     @Override
     public void run() {
-        runnableWrapperStatement.wrap(runnableMethod);
+        runnableWrapperStatement.wrap(runnable);
     }
 
-    public void setRunnableMethod(Runnable runnableMethod) {
-        this.runnableMethod = runnableMethod;
+    public void setRunnableMethod(Runnable runnable) {
+        this.runnable = runnable;
     }
 
-    protected static class NoWrapping extends RunnableWrapper {
+    public static class NoWrapping extends RunnableWrapper {
         public NoWrapping() {
             super(Runnable::run);
         }
