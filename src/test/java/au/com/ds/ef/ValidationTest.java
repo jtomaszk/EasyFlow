@@ -4,7 +4,7 @@ import au.com.ds.ef.err.*;
 import org.junit.*;
 import static au.com.ds.ef.ValidationTest.Events.*;
 import static au.com.ds.ef.ValidationTest.States.*;
-import static au.com.ds.ef.FlowBuilder.*;
+import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.*;
 
 public class ValidationTest {
 	public enum States implements StateEnum {

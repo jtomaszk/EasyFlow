@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import static au.com.ds.ef.FlowBuilder.from;
+import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.from;
 import static au.com.ds.ef.FlowBuilder.on;
 import static au.com.ds.ef.JsonArrayParserTest.Events.*;
 import static au.com.ds.ef.JsonArrayParserTest.States.*;

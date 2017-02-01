@@ -1,14 +1,17 @@
 package au.com.ds.ef;
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
+import au.com.ds.ef.call.ContextHandler;
+import au.com.ds.ef.call.StateHandler;
 
-import au.com.ds.ef.call.*;
-import sun.management.resources.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static au.com.ds.ef.SynchronizationTest.Events.*;
+import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.from;
+import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.on;
+import static au.com.ds.ef.SynchronizationTest.Events.initialize;
+import static au.com.ds.ef.SynchronizationTest.Events.terminate;
 import static au.com.ds.ef.SynchronizationTest.States.*;
-import static au.com.ds.ef.FlowBuilder.*;
 
 /**
  * With original synchronize()/notifyAll() approach this test never finishes
@@ -41,7 +44,7 @@ public class SynchronizationTest {
 
     static class Node implements Runnable {
         private static AtomicInteger runningInstances = new AtomicInteger(THREAD_NUM);
-        final EasyFlow<StatefulContext> flow;
+        final Flow<StatefulContext> flow;
         ExecutorService executor;
 
         Node(ExecutorService executor) {

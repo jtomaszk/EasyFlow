@@ -9,12 +9,12 @@ import au.com.ds.ef.err.LogicViolationError;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
 
-import static au.com.ds.ef.FlowBuilder.from;
-import static au.com.ds.ef.FlowBuilder.fromTransitions;
+import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.from;
+import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.fromTransitions;
 import static au.com.ds.ef.FlowBuilder.on;
 import static au.com.ds.ef.RunSingleTest.Events.*;
 import static au.com.ds.ef.RunSingleTest.States.*;
@@ -82,7 +82,7 @@ public class RunSingleTest {
                 )
 		    );
 
-		final Queue<Integer> actualOrder = new LinkedBlockingQueue<Integer>();
+		final Collection<Integer> actualOrder = Collections.synchronizedCollection(new ArrayList<>());
 
         flow
 		    .whenEnter(START, new ContextHandler<StatefulContext>() {
@@ -136,12 +136,14 @@ public class RunSingleTest {
         ctx.awaitTermination();
 
 		int i = 0;
-		for (Integer order : actualOrder) {
-			i++;
-			if (order != i) {
-				throw new RuntimeException("Events called not in order expected: " + i + " actual: " + order);
-			}
-		}
+        synchronized (actualOrder) {
+            for (Integer order : actualOrder) {
+                i++;
+                if (order != i) {
+                    throw new RuntimeException("Events called not in order expected: " + i + " actual: " + order);
+                }
+            }
+        }
 	}
 
 

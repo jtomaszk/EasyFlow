@@ -16,9 +16,6 @@ final class TransitionCollection {
 
     protected TransitionCollection(Collection<Transition> transitions, boolean validate) {
         if (transitions != null) {
-
-
-
             for (Transition transition : transitions) {
                 Map<EventEnum, Transition> map = transitionFromState.get(transition.getStateFrom());
                 if (map == null) {

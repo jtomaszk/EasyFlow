@@ -20,7 +20,7 @@ public class FlowLoggerImpl implements FlowLogger {
             Class<?> factoryClass = Class.forName("org.slf4j.LoggerFactory");
             Class<?> loggerClass = Class.forName("org.slf4j.Logger");
             Method factoryMethod = factoryClass.getDeclaredMethod("getLogger", String.class);
-            logger = factoryMethod.invoke(null, EasyFlow.class.getName());
+            logger = factoryMethod.invoke(null, Flow.class.getName());
             infoMethod = loggerClass.getDeclaredMethod("info", String.class);
             errorMethod = loggerClass.getDeclaredMethod("error", String.class, Throwable.class);
             info("Using slf4j logging...");
@@ -39,7 +39,7 @@ public class FlowLoggerImpl implements FlowLogger {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("INFO " + EasyFlow.class.getName() + " " + formattedMessage);
+            System.out.println("INFO " + Flow.class.getName() + " " + formattedMessage);
         }
     }
 
@@ -51,7 +51,7 @@ public class FlowLoggerImpl implements FlowLogger {
             } catch (Exception e2) {
             }
         } else {
-            System.err.println("ERROR " + EasyFlow.class.getName() + " " + message);
+            System.err.println("ERROR " + Flow.class.getName() + " " + message);
             e.printStackTrace();
         }
     }

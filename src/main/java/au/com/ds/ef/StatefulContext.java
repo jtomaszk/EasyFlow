@@ -15,7 +15,7 @@ public class StatefulContext implements Serializable {
 	private static volatile long idCounter = 1;
 	
 	private final String id;
-    private EasyFlow flow;
+    private Flow flow;
 	private final AtomicReference<StateEnum> state = new AtomicReference<>();
 	private final AtomicBoolean terminated = new AtomicBoolean(false);
 	private final AtomicBoolean stopped = new AtomicBoolean(false);
@@ -91,7 +91,7 @@ public class StatefulContext implements Serializable {
         flow.trigger(event, this);
     }
 
-    protected void setFlow(EasyFlow<? extends StatefulContext> flow) {
+    protected void setFlow(Flow<? extends StatefulContext> flow) {
         this.flow = flow;
     }
 	
