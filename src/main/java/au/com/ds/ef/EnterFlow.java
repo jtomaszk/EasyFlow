@@ -16,6 +16,14 @@ import java.util.stream.Collectors;
 
 import static au.com.ds.ef.HandlerCollection.EventType;
 
+/**
+ *
+ * Flow which only invokes actions registered when entering particular state.
+ * Apart from that you can register generic action invoked upon error and termination.
+ *
+ * Flow allows to have conditional steps.
+ *
+ */
 public class EnterFlow<C extends StatefulContext> implements Flow<C> {
 
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -102,7 +110,12 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
             throw new IllegalStateException("You need to provide executor.");
         }
         context.setFlow(this);
-        transit(context.getState(), context);
+
+        if (context.getStateValue() == null) {
+            context.getStateRef().set(startState);
+        }
+
+        transit(context.getStateValue(), context);
     }
 
     public boolean safeTrigger(final EventEnum event, final C context) {
@@ -134,7 +147,7 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
             return false;
         }
 
-        final StateEnum stateFrom = context.getState();
+        final StateEnum stateFrom = context.getStateValue();
         if (condition != null && stateFrom != condition) {
             logger.trace("Current state is different than expected in condition.");
             return false;
@@ -148,7 +161,7 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
         }
 
         try {
-            if (context.getAtomicState().compareAndSet(stateFrom, transition.getStateTo())) {
+            if (context.getStateRef().compareAndSet(stateFrom, transition.getStateTo())) {
                 transit(transition.getStateTo(), context);
             }else{
 

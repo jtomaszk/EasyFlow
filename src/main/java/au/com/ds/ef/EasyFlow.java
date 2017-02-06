@@ -65,10 +65,10 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
         prepare();
         context.setFlow(this);
 
-        if (context.getState() == null) {
+        if (context.getStateValue() == null) {
             setCurrentState(startState, false, context);
         } else if (enterInitialState) {
-            setCurrentState(context.getState(), true, context);
+            setCurrentState(context.getStateValue(), true, context);
         }
     }
 
@@ -80,13 +80,13 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
         RunnableWrapper wrapper = context.getRunnableWrapper();
         wrapper.setRunnableMethod(() -> {
             if (!enterInitialState) {
-                StateEnum prevState = context.getState();
+                StateEnum prevState = context.getStateValue();
                 if (prevState != null) {
                     leave(prevState, context);
                 }
             }
 
-            if (context.casState(condition, targetState)) {
+            if (casState(context, condition, targetState)) {
                 enter(targetState, context);
             }
 
@@ -98,6 +98,15 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
     protected void execute(Runnable task, final C context) {
         if (!context.isTerminated()) {
             executor.execute(task);
+        }
+    }
+
+    protected boolean casState(final C context, StateEnum expectedState, StateEnum targetState) {
+        if (expectedState != null) {
+            return context.getStateRef().compareAndSet(expectedState, targetState);
+        }else{
+            context.getStateRef().set(targetState);
+            return true;
         }
     }
 
@@ -192,7 +201,7 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
             return false;
         }
 
-        final StateEnum stateFrom = context.getState();
+        final StateEnum stateFrom = context.getStateValue();
         final Transition transition = transitions.getTransition(stateFrom, event);
 
         if (condition!=null && stateFrom != condition) {
@@ -223,7 +232,7 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
             execute(wrapper, context);
         } else if (!safe) {
             throw new LogicViolationError("Invalid Event: " + event +
-                    " triggered while in State: " + context.getState() + " for " + context);
+                    " triggered while in State: " + context.getStateValue() + " for " + context);
         }
 
         return transition != null;

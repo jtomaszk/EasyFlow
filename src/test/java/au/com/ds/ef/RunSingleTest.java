@@ -258,7 +258,7 @@ public class RunSingleTest {
         flow.trace().start(ctx);
         ctx.awaitTermination();
 
-        assertEquals("Final state", STATE_3, ctx.getState());
+        assertEquals("Final state", STATE_3, ctx.getStateValue());
     }
 
     @Test
@@ -296,7 +296,7 @@ public class RunSingleTest {
             .trace()
             .start(ctx);
 
-        assertEquals("Final state", STATE_3, ctx.getState());
+        assertEquals("Final state", STATE_3, ctx.getStateValue());
     }
 
     @Test

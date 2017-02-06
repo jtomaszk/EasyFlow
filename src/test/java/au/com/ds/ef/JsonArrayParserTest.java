@@ -315,7 +315,7 @@ public class JsonArrayParserTest {
         ParserContext ctx = new ParserContext("[]");
         flow.start(ctx);
 
-        assertEquals("Final state should be DONE", DONE, ctx.getState());
+        assertEquals("Final state should be DONE", DONE, ctx.getStateValue());
         assertEquals("Result Item type should be List", Item.ItemType.LIST, ctx.getResult().getType());
         assertTrue("Result List should be empty", ctx.getResult().getList().isEmpty());
     }
@@ -325,7 +325,7 @@ public class JsonArrayParserTest {
         ParserContext ctx = new ParserContext("['Item 1']");
         flow.start(ctx);
 
-        assertEquals("Final state should be DONE", DONE, ctx.getState());
+        assertEquals("Final state should be DONE", DONE, ctx.getStateValue());
         assertEquals("Result Item type should be List", Item.ItemType.LIST, ctx.getResult().getType());
         assertEquals("Result Item should have 1 sub-item", 1, ctx.getResult().getList().size());
         Item item0 = ctx.getResult().getList().get(0);
@@ -338,7 +338,7 @@ public class JsonArrayParserTest {
         ParserContext ctx = new ParserContext("['Item 1', 'Item 2']");
         flow.start(ctx);
 
-        assertEquals("Final state should be DONE", DONE, ctx.getState());
+        assertEquals("Final state should be DONE", DONE, ctx.getStateValue());
         assertEquals("Result Item type should be List", Item.ItemType.LIST, ctx.getResult().getType());
         assertEquals("Result Item should have 2 sub-items", 2, ctx.getResult().getList().size());
         Item item1 = ctx.getResult().getList().get(1);
@@ -351,7 +351,7 @@ public class JsonArrayParserTest {
         ParserContext ctx = new ParserContext("[,'Item 1', , 'Item 2', ]");
         flow.start(ctx);
 
-        assertEquals("Final state should be DONE", DONE, ctx.getState());
+        assertEquals("Final state should be DONE", DONE, ctx.getStateValue());
         assertEquals("Result Item type should be List", Item.ItemType.LIST, ctx.getResult().getType());
         assertEquals("Result Item should have 2 sub-items", 2, ctx.getResult().getList().size());
         Item item1 = ctx.getResult().getList().get(1);
@@ -364,7 +364,7 @@ public class JsonArrayParserTest {
         ParserContext ctx = new ParserContext("['Item 1', ['Item 3', 'Item 4'], 'Item 2']");
         flow.start(ctx);
 
-        assertEquals("Final state should be DONE", DONE, ctx.getState());
+        assertEquals("Final state should be DONE", DONE, ctx.getStateValue());
         assertEquals("Result Item should have 3 sub-items", 3, ctx.getResult().getList().size());
         Item item0 = ctx.getResult().getList().get(0);
         assertEquals("Result Item[0] should be 'Item 1'", "Item 1", item0.getValue());
@@ -384,7 +384,7 @@ public class JsonArrayParserTest {
         ParserContext ctx = new ParserContext("['Item 1'");
         flow.start(ctx);
 
-        assertEquals("Final state should be ERROR", ERROR, ctx.getState());
+        assertEquals("Final state should be ERROR", ERROR, ctx.getStateValue());
         assertNull("Result should be null", ctx.getResult());
     }
 
@@ -393,7 +393,7 @@ public class JsonArrayParserTest {
         ParserContext ctx = new ParserContext("['Item 1', []");
         flow.start(ctx);
 
-        assertEquals("Final state should be ERROR", ERROR, ctx.getState());
+        assertEquals("Final state should be ERROR", ERROR, ctx.getStateValue());
         assertNull("Result should be null", ctx.getResult());
     }
 
@@ -402,7 +402,7 @@ public class JsonArrayParserTest {
         ParserContext ctx = new ParserContext("['Item 1', ['Item 2']");
         flow.start(ctx);
 
-        assertEquals("Final state should be ERROR", ERROR, ctx.getState());
+        assertEquals("Final state should be ERROR", ERROR, ctx.getStateValue());
         assertNull("Result should be null", ctx.getResult());
     }
 
@@ -411,7 +411,7 @@ public class JsonArrayParserTest {
         ParserContext ctx = new ParserContext("['Item 1]");
         flow.start(ctx);
 
-        assertEquals("Final state should be ERROR", ERROR, ctx.getState());
+        assertEquals("Final state should be ERROR", ERROR, ctx.getStateValue());
         assertNull("Result should be null", ctx.getResult());
     }
 }

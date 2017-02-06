@@ -34,24 +34,11 @@ public class StatefulContext implements Serializable {
 		return id;
 	}
 
-    public void setState(StateEnum state) {
-        this.state.set(state);
-    }
-
-    public boolean casState(StateEnum expectedState, StateEnum targetState) {
-        if (expectedState != null) {
-            return this.state.compareAndSet(expectedState, targetState);
-        }else{
-            setState(targetState);
-            return true;
-        }
-    }
-
-    public AtomicReference<StateEnum> getAtomicState(){
+    public AtomicReference<StateEnum> getStateRef() {
         return state;
     }
 
-    public StateEnum getState() {
+    public StateEnum getStateValue() {
         return state.get();
     }
 
