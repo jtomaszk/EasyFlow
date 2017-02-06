@@ -5,7 +5,10 @@ import au.com.ds.ef.call.ExecutionErrorHandler;
 import au.com.ds.ef.call.StateHandler;
 import au.com.ds.ef.err.ExecutionError;
 import au.com.ds.ef.err.LogicViolationError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -14,6 +17,8 @@ import java.util.stream.Collectors;
 import static au.com.ds.ef.HandlerCollection.EventType;
 
 public class EnterFlow<C extends StatefulContext> implements Flow<C> {
+
+    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     public class DefaultErrorHandler implements ExecutionErrorHandler<StatefulContext> {
         @Override
@@ -25,7 +30,7 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
             msg += "with Context [" + error.getContext() + "] ";
 
             Exception e = new Exception(msg, error);
-            log.error("Error", e);
+            logger.error("Error", e);
         }
     }
 
@@ -36,14 +41,11 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
 
     private HandlerCollection handlers = new HandlerCollection();
     private boolean trace = false;
-    private FlowLogger log = new FlowLoggerImpl();
 
     protected EnterFlow(StateEnum startState) {
         this.startState = startState;
         this.handlers.setHandler(HandlerCollection.EventType.ERROR, null, null, new DefaultErrorHandler());
     }
-
-
 
     public StateEnum getStartState() {
         return startState;
@@ -63,48 +65,6 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
 
     public List<Transition> getAvailableTransitions(StateEnum stateFrom) {
         return transitions.getTransitions(stateFrom);
-    }
-
-
-
-    private void prepare() {
-        if (executor == null) {
-            executor = new AsyncExecutor();
-        }
-    }
-
-    public void start(boolean enterInitialState, final C context) {
-        prepare();
-        context.setFlow(this);
-
-        if (context.getState() == null) {
-            setCurrentState(startState, false, context);
-        } else if (enterInitialState) {
-            setCurrentState(context.getState(), true, context);
-        }
-    }
-
-    protected void setCurrentState(final StateEnum state, final boolean enterInitialState, final C context) {
-        transit(null, state, enterInitialState, context);
-    }
-
-    protected void transit(final StateEnum condition, final StateEnum targetState, final boolean enterInitialState, final C context) {
-        RunnableWrapper wrapper = context.getRunnableWrapper();
-        wrapper.setRunnableMethod(() -> {
-
-            if (context.casState(condition, targetState)) {
-                enter(targetState, context);
-            }
-
-        });
-
-        execute(wrapper, context);
-    }
-
-    protected void execute(Runnable task, final C context) {
-        if (!context.isTerminated()) {
-            executor.execute(task);
-        }
     }
 
     public Flow<C> whenEnter(StateEnum state, ContextHandler<? extends C> onEnter) {
@@ -137,87 +97,99 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
         return this;
     }
 
-    public Flow<C> logger(FlowLogger log) {
-        this.log = log;
-        return this;
-    }
-
-
-
-    public void trigger(final EventEnum event, final C context) throws LogicViolationError {
-        trigger(event, context, null, false);
+    public void start(boolean enterInitialState, final C context) {
+        if (executor == null) {
+            throw new IllegalStateException("You need to provide executor.");
+        }
+        context.setFlow(this);
+        transit(context.getState(), context);
     }
 
     public boolean safeTrigger(final EventEnum event, final C context) {
-        try {
-            return trigger(event, context, null, true);
-        } catch (LogicViolationError logicViolationError) {
-            return false;
-        }
+        throw new UnsupportedOperationException();
     }
-    public boolean conditionTrigger(final EventEnum event, final C context, final StateEnum condition) throws LogicViolationError {
-        return trigger(event, context, condition, false);
+
+    public boolean trigger(final EventEnum event, final C context) throws LogicViolationError {
+        return trigger(event, context, null, 1);
+    }
+
+    public boolean conditionTrigger(final EventEnum event,
+                                    final C context,
+                                    final StateEnum condition) throws LogicViolationError {
+        return trigger(event, context, condition, 0);
     }
 
     /**
-     * Concurrent modification of state can cause situation when event and leave handlers are invoked but not enter handlers.
-     * If conditional state do not match current, no handlers will be invoked
+     * If condition state do not match current, no handlers will be invoked.
+     * @param repetition - describe how many times we can try to change state
+     * @return false - when context terminated
+     * @return false - when current state is different than expected in condition
+     * @return false - when couldn't set a new condition - race condition
+     * @return true - state changed, transtion scheduled
+     * @throws LogicViolationError
      */
-    private boolean trigger(final EventEnum event, final C context, final StateEnum condition, final boolean safe)
-            throws LogicViolationError {
+    boolean trigger(final EventEnum event, final C context, StateEnum condition, int repetition) throws LogicViolationError {
 
-        if (context.isTerminated()) {
+        if (context.isTerminated()){
             return false;
         }
 
         final StateEnum stateFrom = context.getState();
-        final Transition transition = transitions.getTransition(stateFrom, event);
-
-        if (condition!=null && stateFrom != condition) {
+        if (condition != null && stateFrom != condition) {
+            logger.trace("Current state is different than expected in condition.");
             return false;
         }
 
-        if (transition != null) {
+        final Transition transition = transitions.getTransition(stateFrom, event);
 
-            try {
-
-                transit(condition, transition.getStateTo(), false, context);
-            } catch (Exception e) {
-                doOnError(new ExecutionError(stateFrom, event, e,
-                        "Execution Error in [trigger]", context));
-            }
-
-        } else if (!safe) {
-            throw new LogicViolationError("Invalid Event: " + event +
-                    " triggered while in State: " + context.getState() + " for " + context);
+        if (transition == null) {
+            throw new LogicViolationError(String.format("Invalid Event: %s triggered while in State: %s for %s",
+                    event, stateFrom, context));
         }
 
-        return transition != null;
+        try {
+            if (context.getAtomicState().compareAndSet(stateFrom, transition.getStateTo())) {
+                transit(transition.getStateTo(), context);
+            }else{
+
+                if(repetition>0){
+                    logger.info("Fail to change state due to parallel context change.");
+                    return trigger(event, context, null, --repetition);
+                }
+                return false;
+            }
+        } catch (Exception e) {
+            doOnError(new ExecutionError(stateFrom, event, e, "Execution Error in [trigger]", context));
+        }
+        return true;
     }
 
+    void transit(final StateEnum targetState, final C context) {
+        RunnableWrapper wrapper = context.getRunnableWrapper();
+        wrapper.setRunnableMethod(() -> enter(targetState, context));
+        if (!context.isTerminated()) {
+            executor.execute(wrapper);
+        }
+    }
 
+    protected void enter(final StateEnum state, final C context) {
 
-    private void enter(final StateEnum state, final C context) {
         if (context.isTerminated()) {
             return;
         }
 
         try {
-            // first enter state
-            if (trace)
-                log.info("when enter %s for %s <<<", state, context);
+            logger.trace("When enter {} for {} <<<", state, context);
 
             handlers.callOnStateEntered(state, context);
 
-            if (trace)
-                log.info("when enter %s for %s >>>", state, context);
+            logger.trace("When enter {} for {} >>>", state, context);
 
             if (transitions.isFinal(state)) {
                 doOnTerminate(state, context);
             }
         } catch (Exception e) {
-            doOnError(new ExecutionError(state, null, e,
-                    "Execution Error in [whenEnter] handler", context));
+            doOnError(new ExecutionError(state, null, e, "Execution Error in [whenEnter] handler", context));
         }
     }
 
@@ -229,13 +201,12 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
     protected void doOnTerminate(StateEnum state, final C context) {
         if (!context.isTerminated()) {
             try {
-                if (trace)
-                    log.info("terminating context %s", context);
+                logger.trace("Terminating context {}", context);
 
                 context.setTerminated();
                 handlers.callOnFinalState(state, context);
             } catch (Exception e) {
-                log.error("Execution Error in [whenTerminate] handler", e);
+                logger.error("Execution Error in [whenTerminate] handler", e);
             }
         }
     }

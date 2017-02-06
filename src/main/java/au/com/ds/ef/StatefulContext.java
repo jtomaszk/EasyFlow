@@ -47,6 +47,10 @@ public class StatefulContext implements Serializable {
         }
     }
 
+    public AtomicReference<StateEnum> getAtomicState(){
+        return state;
+    }
+
     public StateEnum getState() {
         return state.get();
     }
@@ -87,8 +91,8 @@ public class StatefulContext implements Serializable {
         return flow.conditionTrigger(event, this, condition);
     }
 
-    public void trigger(EventEnum event) throws LogicViolationError {
-        flow.trigger(event, this);
+    public boolean trigger(EventEnum event) throws LogicViolationError {
+        return flow.trigger(event, this);
     }
 
     protected void setFlow(Flow<? extends StatefulContext> flow) {

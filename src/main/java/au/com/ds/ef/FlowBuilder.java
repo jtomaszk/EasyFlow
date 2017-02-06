@@ -44,6 +44,10 @@ public class FlowBuilder<F extends Flow> {
             super(new EnterFlow(startState));
         }
 
+        public static EnterFlowBuilder from(StateEnum startState) {
+            return new EnterFlowBuilder(startState);
+        }
+
         public static EnterFlowBuilder from(StateEnum startState, List<Transition> dt) {
             defaultTransitions.set(dt);
             return new EnterFlowBuilder(startState);

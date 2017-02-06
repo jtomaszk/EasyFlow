@@ -44,7 +44,7 @@ public interface Flow<C extends StatefulContext> extends TransitonManager{
     }
 
 
-    void trigger(final EventEnum event, final C context) throws LogicViolationError;
+    boolean trigger(final EventEnum event, final C context) throws LogicViolationError;
 
     boolean safeTrigger(final EventEnum event, final C context);
 

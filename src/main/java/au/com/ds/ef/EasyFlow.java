@@ -166,8 +166,8 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
         }
         return false;
     }
-    public void trigger(final EventEnum event, final C context) throws LogicViolationError {
-        trigger(event, context, null, false);
+    public boolean trigger(final EventEnum event, final C context) throws LogicViolationError {
+        return trigger(event, context, null, false);
     }
 
     public boolean safeTrigger(final EventEnum event, final C context) {
