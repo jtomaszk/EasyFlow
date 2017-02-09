@@ -6,8 +6,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 @SuppressWarnings("rawtypes")
 public class StatefulContext implements Serializable {

@@ -1,9 +1,7 @@
 package au.com.ds.ef;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class FlowBuilder<F extends Flow> {
 
@@ -63,63 +61,44 @@ public class FlowBuilder<F extends Flow> {
         private EventEnum event;
         private final List<Transition> defaultTransitions;
 
-        private ToHolder(EventEnum event, List<Transition> defaultTransitions) {
+        public ToHolder(EventEnum event, List<Transition> defaultTransitions) {
             this.event = event;
             this.defaultTransitions = defaultTransitions;
         }
 
+        public Transition subFlow(IncompleteTransition incompleteTransition){
+            return incompleteTransition.accept(event);
+        }
+
+        public static Transition emit(EventEnum event) {
+            return new RegularTransition(event, null, false, null);
+        }
+
         public Transition to(StateEnum state) {
-            return new Transition(event, state, false, defaultTransitions);
+            return new RegularTransition(event, state, false, defaultTransitions);
         }
 
         public Transition finish(StateEnum state) {
-            return new Transition(event, state, true, null);
+            return new RegularTransition(event, state, true, null);
         }
 
-
         public Transition backTo(StateEnum state) {
-            return new Transition(event, state, false, null);
+            return new RegularTransition(event, state, false, null);
         }
     }
 
     public F transit(Transition... transitions) {
-
-        if(defaultTransitions.get()!=null){
-            return transit(false, defaultTransitions.get(), transitions);
-        }else{
-            return transit(false, transitions);
-        }
+        return transit(false, defaultTransitions.get(), transitions);
     }
 
-    public F transit(boolean skipValidation, Transition... transitions) {
-        for (Transition transition : transitions) {
-            transition.setStateFrom(flow.getStartState());
-        }
-        flow.processAllTransitions(skipValidation);
+    public F transit(boolean skipValidation, List<Transition> dt, Transition... transitions) {
 
-        return flow;
-    }
-
-    public F transit(
-            boolean skipValidation,List<Transition> dt, Transition... transitions) {
-
-        composeTransitions(dt, transitions).forEach( t -> t.setStateFrom(flow.getStartState()));
+        TransitionUtil.composeTransitions(dt, transitions).forEach( t -> t.setStateFrom(flow.getStartState()));
 
         flow.processAllTransitions(skipValidation);
 
         defaultTransitions.remove();
 
         return flow;
-    }
-
-    private Stream<Transition> composeTransitions(List<Transition> dtList, Transition[] transitions) {
-
-        return Stream.concat(
-                Arrays.stream(transitions),
-                dtList.stream().filter(dt -> !isOverridePresent(dt, transitions)));
-    }
-
-    private boolean isOverridePresent(Transition dt, Transition[] transitions) {
-        return Arrays.stream(transitions).filter(t -> t.getEvent()==dt.getEvent()).findFirst().isPresent();
     }
 }

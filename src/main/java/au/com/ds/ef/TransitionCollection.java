@@ -10,16 +10,15 @@ import java.util.*;
  * Time: 2:08 PM
  */
 final class TransitionCollection {
-    private Map<StateEnum, Map<EventEnum, Transition>> transitionFromState =
-        new HashMap<StateEnum, Map<EventEnum, Transition>>();
-    private Set<StateEnum> finalStates = new HashSet<StateEnum>();
+    private Map<StateEnum, Map<EventEnum, Transition>> transitionFromState = new HashMap<>();
+    private Set<StateEnum> finalStates = new HashSet<>();
 
     protected TransitionCollection(Collection<Transition> transitions, boolean validate) {
         if (transitions != null) {
             for (Transition transition : transitions) {
                 Map<EventEnum, Transition> map = transitionFromState.get(transition.getStateFrom());
                 if (map == null) {
-                    map = new HashMap<EventEnum, Transition>();
+                    map = new HashMap<>();
                     transitionFromState.put(transition.getStateFrom(), map);
                 }
                 map.put(transition.getEvent(), transition);
@@ -34,7 +33,7 @@ final class TransitionCollection {
                 throw new DefinitionError("No transitions defined");
             }
 
-            Set<Transition> processedTransitions = new HashSet<Transition>();
+            Set<Transition> processedTransitions = new HashSet<>();
             for (Transition transition : transitions) {
                 StateEnum stateFrom = transition.getStateFrom();
                 if (finalStates.contains(stateFrom)) {
@@ -67,7 +66,7 @@ final class TransitionCollection {
 
     public List<Transition> getTransitions(StateEnum stateFrom) {
         Map<EventEnum, Transition> transitionMap = transitionFromState.get(stateFrom);
-        return transitionMap == null ? Collections.<Transition>emptyList() : new ArrayList<Transition>(transitionMap.values());
+        return transitionMap == null ? Collections.<Transition>emptyList() : new ArrayList<>(transitionMap.values());
     }
 
     protected boolean isFinal(StateEnum state) {

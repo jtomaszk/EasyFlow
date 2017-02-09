@@ -1,4 +1,4 @@
-package au.com.ds.ef;
+package au.com.ds.ef.log;
 
 /**
  * User: andrey

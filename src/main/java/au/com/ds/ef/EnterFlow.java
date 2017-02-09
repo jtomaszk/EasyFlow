@@ -60,10 +60,11 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
     }
 
     public void processAllTransitions(boolean skipValidation) {
-        List<Transition> cTransitions = Transition.consumeTransitions();
-        if (cTransitions != null) {
-            cTransitions = cTransitions.stream().filter(t -> t.getStateFrom() != null).collect(Collectors.toList());
-        }
+
+        List<Transition> cTransitions = RegularTransition.Repository.consume().stream()
+                .filter(t -> t.getStateFrom() != null)
+                .collect(Collectors.toList());
+
         transitions = new TransitionCollection(cTransitions, !skipValidation);
     }
 

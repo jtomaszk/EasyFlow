@@ -6,10 +6,13 @@ import au.com.ds.ef.call.ExecutionErrorHandler;
 import au.com.ds.ef.call.StateHandler;
 import au.com.ds.ef.err.ExecutionError;
 import au.com.ds.ef.err.LogicViolationError;
+import au.com.ds.ef.log.FlowLogger;
+import au.com.ds.ef.log.FlowLoggerImpl;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import static au.com.ds.ef.HandlerCollection.EventType;
@@ -44,7 +47,7 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
     }
 
     public void processAllTransitions(boolean skipValidation) {
-        List<Transition> cTransitions = Transition.consumeTransitions();
+        List<Transition> cTransitions = RegularTransition.Repository.consume();
         if (cTransitions != null) {
             cTransitions = cTransitions.stream().filter(t -> t.getStateFrom() != null).collect(Collectors.toList());
         }
@@ -57,7 +60,7 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
 
     private void prepare() {
         if (executor == null) {
-            executor = new AsyncExecutor();
+            executor = Executors.newSingleThreadExecutor();
         }
     }
 

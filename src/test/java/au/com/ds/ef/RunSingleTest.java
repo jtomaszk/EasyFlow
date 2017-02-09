@@ -150,11 +150,11 @@ public class RunSingleTest {
 	@Test
 	public void testEventsOrderTransitionCollection() throws LogicViolationError {
         List<Transition> transitions = asList(
-                new Transition(event_1, START, STATE_1),
-                new Transition(event_2, STATE_1, STATE_2, true),
-                new Transition(event_3, STATE_1, STATE_3),
-                new Transition(event_4, STATE_3, STATE_1),
-                new Transition(event_5, STATE_3, STATE_4, true)
+                new RegularTransition(event_1, START, STATE_1, false),
+                new RegularTransition(event_2, STATE_1, STATE_2, true),
+                new RegularTransition(event_3, STATE_1, STATE_3, false),
+                new RegularTransition(event_4, STATE_3, STATE_1, false),
+                new RegularTransition(event_5, STATE_3, STATE_4, true)
         );
 
         EasyFlow<StatefulContext> flow = fromTransitions(START, transitions, false);
