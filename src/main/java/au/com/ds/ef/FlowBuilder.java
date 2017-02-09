@@ -7,8 +7,6 @@ public class FlowBuilder<F extends Flow> {
 
     protected final F flow;
 
-    private static ThreadLocal<List<Transition>> defaultTransitions = new InheritableThreadLocal<>();
-
     protected FlowBuilder(F flow) {
         this.flow = flow;
     }
@@ -24,7 +22,7 @@ public class FlowBuilder<F extends Flow> {
         }
 
         public static EasyFlowBuilder from(StateEnum startState, List<Transition> dt) {
-            defaultTransitions.set(dt);
+            ToHolder.resetDefaultTransitions(dt);
             return new EasyFlowBuilder(startState);
         }
 
@@ -47,48 +45,13 @@ public class FlowBuilder<F extends Flow> {
         }
 
         public static EnterFlowBuilder from(StateEnum startState, List<Transition> dt) {
-            defaultTransitions.set(dt);
+            ToHolder.resetDefaultTransitions(dt);
             return new EnterFlowBuilder(startState);
         }
     }
 
-
-    public static ToHolder on(EventEnum event) {
-        return new ToHolder(event, defaultTransitions.get());
-    }
-
-    public static class ToHolder {
-        private EventEnum event;
-        private final List<Transition> defaultTransitions;
-
-        public ToHolder(EventEnum event, List<Transition> defaultTransitions) {
-            this.event = event;
-            this.defaultTransitions = defaultTransitions;
-        }
-
-        public Transition subFlow(IncompleteTransition incompleteTransition){
-            return incompleteTransition.accept(event);
-        }
-
-        public static Transition emit(EventEnum event) {
-            return new RegularTransition(event, null, false, null);
-        }
-
-        public Transition to(StateEnum state) {
-            return new RegularTransition(event, state, false, defaultTransitions);
-        }
-
-        public Transition finish(StateEnum state) {
-            return new RegularTransition(event, state, true, null);
-        }
-
-        public Transition backTo(StateEnum state) {
-            return new RegularTransition(event, state, false, null);
-        }
-    }
-
     public F transit(Transition... transitions) {
-        return transit(false, defaultTransitions.get(), transitions);
+        return transit(false, ToHolder.getDefaultTransitions(), transitions);
     }
 
     public F transit(boolean skipValidation, List<Transition> dt, Transition... transitions) {
@@ -96,8 +59,6 @@ public class FlowBuilder<F extends Flow> {
         TransitionUtil.composeTransitions(dt, transitions).forEach( t -> t.setStateFrom(flow.getStartState()));
 
         flow.processAllTransitions(skipValidation);
-
-        defaultTransitions.remove();
 
         return flow;
     }

@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
  */
 public class RegularTransition implements Transition{
 
-
     protected EventEnum event;
     private StateEnum stateFrom;
     private StateEnum stateTo;

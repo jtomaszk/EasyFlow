@@ -8,10 +8,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.from;
-import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.on;
 import static au.com.ds.ef.SynchronizationTest.Events.initialize;
 import static au.com.ds.ef.SynchronizationTest.Events.terminate;
 import static au.com.ds.ef.SynchronizationTest.States.*;
+import static au.com.ds.ef.ToHolder.on;
 
 /**
  * With original synchronize()/notifyAll() approach this test never finishes

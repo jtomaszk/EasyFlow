@@ -6,9 +6,10 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static au.com.ds.ef.FlowBuilder.on;
 import static au.com.ds.ef.SubFlowTest.Events.*;
 import static au.com.ds.ef.SubFlowTest.States.*;
+import static au.com.ds.ef.ToHolder.emit;
+import static au.com.ds.ef.ToHolder.on;
 
 public class SubFlowTest {
 
@@ -27,10 +28,10 @@ public class SubFlowTest {
 
     IncompleteTransition SUBFLOW =
             IncompleteTransition.from(SF, withDefaults).transit(
-                    IncompleteTransition.on(c).to(C).transit(
-                            FlowBuilder.ToHolder.emit(s1),
-                            IncompleteTransition.on(e).to(E).transit(
-                                    FlowBuilder.ToHolder.emit(s2)
+                    on(c).to(C).transit(
+                            emit(s1),
+                            on(e).to(E).transit(
+                                    emit(s2)
                             )
                     )
             );

@@ -1,6 +1,5 @@
 package au.com.ds.ef;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -9,10 +8,6 @@ import java.util.stream.Stream;
  * Can't be final transition.
  */
 public class IncompleteTransition extends RegularTransition {
-
-    private static ThreadLocal<List<Transition>> defaultTransitions = new InheritableThreadLocal<List<Transition>>(){{
-        set(new ArrayList<>());
-    }};
 
     /**
      * Updates all transitions on(x).to(X) with stateFrom that comes from emit(x)
@@ -63,7 +58,7 @@ public class IncompleteTransition extends RegularTransition {
 
             Repository.get().removeAll(emitTransitions);
 
-            target.getDefaultTransitions().stream().forEach(t -> t.setStateFrom(target.getStateTo()));
+            target.defaultTransitions.stream().forEach(t -> t.setStateFrom(target.getStateTo()));
 
             return target;
         }
@@ -78,12 +73,8 @@ public class IncompleteTransition extends RegularTransition {
     }
 
     public static IncompleteTransition from(StateEnum startState, List<Transition> dT) {
-        defaultTransitions.set(dT);
+        ToHolder.resetDefaultTransitions(dT);
         return new IncompleteTransition(null, startState, dT);
-    }
-
-    public static FlowBuilder.ToHolder on(EventEnum event) {
-        return new FlowBuilder.ToHolder(event, defaultTransitions.get());
     }
 
     public Stub accept(EventEnum event){
@@ -94,9 +85,5 @@ public class IncompleteTransition extends RegularTransition {
     @Override
     public IncompleteTransition transit(Transition... transitions) {
         return (IncompleteTransition)super.transit(transitions);
-    }
-
-    protected List<Transition> getDefaultTransitions(){
-        return defaultTransitions.get();
     }
 }

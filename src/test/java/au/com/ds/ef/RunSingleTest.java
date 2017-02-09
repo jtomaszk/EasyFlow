@@ -15,9 +15,9 @@ import java.util.List;
 
 import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.from;
 import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.fromTransitions;
-import static au.com.ds.ef.FlowBuilder.on;
 import static au.com.ds.ef.RunSingleTest.Events.*;
 import static au.com.ds.ef.RunSingleTest.States.*;
+import static au.com.ds.ef.ToHolder.on;
 import static java.util.Arrays.asList;
 import static junit.framework.TestCase.*;
 
