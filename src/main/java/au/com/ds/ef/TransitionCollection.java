@@ -40,7 +40,9 @@ final class TransitionCollection {
                     throw new DefinitionError("Some events defined for final State: " + stateFrom);
                 }
 
-                if (processedTransitions.contains(transition)) {
+                if (processedTransitions.stream()
+                        .filter(pt->pt.getStateFrom()==transition.getStateFrom() &&
+                                pt.getEvent()==transition.getEvent()).findFirst().isPresent()) {
                     throw new DefinitionError("Ambiguous transitions: " + transition);
                 }
 

@@ -1,10 +1,7 @@
 package au.com.ds.ef;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * User: andrey
@@ -76,24 +73,4 @@ public class RegularTransition implements Transition{
                 ", stateTo=" + stateTo +
                 '}';
     }
-
-//    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (o == null || getClass() != o.getClass()) return false;
-//
-//        RegularTransition that = (RegularTransition) o;
-//
-//        if (!event.equals(that.event)) return false;
-//        if (!stateFrom.equals(that.stateFrom)) return false;
-//
-//        return true;
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        int result = event.hashCode();
-//        result = 31 * result + stateFrom.hashCode();
-//        return result;
-//    }
 }
