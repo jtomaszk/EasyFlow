@@ -1,11 +1,14 @@
 package au.com.ds.ef;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Can't be final transition.
+ * Constructed sub-flow, can't be reused - uniqueness of state has to be preserved.
+ * Events also has to be unique when provided as reference to ToHolder.subflow method
+ *
  */
 public class IncompleteTransition extends RegularTransition {
 
@@ -45,22 +48,32 @@ public class IncompleteTransition extends RegularTransition {
             target.setStateFrom(stateFrom);
         }
 
+        /**
+         * From all transactions created by 'emit' function (TE) in thread local repository,
+         * match with sub transitions (ST) by event type.
+         * Update ST state-from field.
+         * Remove matched TE.
+         */
         @Override
         public Transition transit(Transition... transitions) {
 
-            List<Transition> emitTransitions = Repository.get().stream().filter(t -> t.getStateTo() == null)
-                    .peek(innerT ->
-                            Stream.of(transitions)
-                                    .filter(t -> t.getStateFrom() == null && t.getEvent() == innerT.getEvent())
-                                    .findFirst()
-                                    .ifPresent(t -> t.setStateFrom(innerT.getStateFrom()))
-                    ).collect(Collectors.toList());
+            Repository.get().removeIf( t->t.getStateTo() == null && updateOuterTransaction(t, transitions));
 
-            Repository.get().removeAll(emitTransitions);
-
-            target.defaultTransitions.stream().forEach(t -> t.setStateFrom(target.getStateTo()));
+            if(target.defaultTransitions!=null) {
+                target.defaultTransitions.stream().forEach(t -> t.setStateFrom(target.getStateTo()));
+            }
 
             return target;
+        }
+
+        private boolean updateOuterTransaction(Transition innerT, Transition[] transitions) {
+            return Stream.of(transitions)
+                    .filter(t -> t.getStateFrom() == null && t.getEvent() == innerT.getEvent())
+                    .findFirst()
+                    .map( tr->{
+                        tr.setStateFrom(innerT.getStateFrom());
+                        return true;
+                    }).orElse(Boolean.FALSE);
         }
     }
 
@@ -72,9 +85,9 @@ public class IncompleteTransition extends RegularTransition {
         return from(startState, null);
     }
 
-    public static IncompleteTransition from(StateEnum startState, List<Transition> dT) {
-        ToHolder.resetDefaultTransitions(dT);
-        return new IncompleteTransition(null, startState, dT);
+    public static IncompleteTransition from(StateEnum startState, List<Transition> dt) {
+        ToHolder.resetDefaultTransitions(dt);
+        return new IncompleteTransition(null, startState, dt);
     }
 
     public Stub accept(EventEnum event){

@@ -9,11 +9,15 @@ public class ToHolder {
         set(new ArrayList<>());
     }};
 
+    public static void resetDefaultTransitions(){
+        defaultTransitions.set(new ArrayList<>());
+    }
+
     public static void resetDefaultTransitions(List<Transition> dt){
         if(dt!=null){
             defaultTransitions.set(dt);
         }else{
-            defaultTransitions.set(new ArrayList<>());
+            resetDefaultTransitions();
         }
     }
 

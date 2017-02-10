@@ -22,7 +22,7 @@ public class ValidationTest {
 	public void testLooseEnd1() {
 		from(START).transit();
 	}
-	
+
 	@Test(expected = DefinitionError.class)
     // no transitions defined for non-final state
 	public void testLooseEnd2() {
@@ -30,15 +30,15 @@ public class ValidationTest {
 			on(event_1).to(STATE_1)
 		);
 	}
-	
-	//@Test(expected = DefinitionError.class)
+
+	@Test(expected = DefinitionError.class)
     // no transitions defined for non-final state
 	public void testLooseEnd3() {
 		from(START).transit(
 			on(event_1).to(STATE_1).transit()
 		);
 	}
-	
+
 	@Test(expected = DefinitionError.class)
     // transition defined for final state
 	public void testRedundantEvent() {
@@ -48,7 +48,7 @@ public class ValidationTest {
 			)
 		);
 	}
-	
+
 	@Test
 	public void testReuseEvent() {
 		from(START).transit(
@@ -91,7 +91,7 @@ public class ValidationTest {
             on(event_2).finish(STATE_2)
 		);
 	}
-	
+
 	@Test
 	public void testValid() {
 		from(START).transit(
