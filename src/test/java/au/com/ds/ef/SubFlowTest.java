@@ -279,7 +279,7 @@ public class SubFlowTest {
     }
 
     @Test
-    public void shouldConnectSubFlowWithNonUniqueEventsWhenProfidedAsFunction() {
+    public void shouldConnectSubFlowWithNonUniqueEventsWhenProvidedAsFunction() {
 
         //arrange
         List<Transition> withDefaults = Arrays.asList(
@@ -325,11 +325,11 @@ public class SubFlowTest {
 
         //assert
 
-        Assert.assertTrue(flow.getAvailableTransitions(E).stream()
-                .filter(t->t.getEvent()==s2 && t.getStateTo()==END_1).findAny().isPresent());
-
         Assert.assertTrue(flow.getAvailableTransitions(C).stream()
                 .filter(t->t.getEvent()==s1 && t.getStateTo()==SF2).findAny().isPresent());
+
+        Assert.assertTrue(flow.getAvailableTransitions(E).stream()
+                .filter(t->t.getEvent()==s2 && t.getStateTo()==END_1).findAny().isPresent());
 
         Assert.assertTrue(flow.getAvailableTransitions(C2).stream()
                 .filter(t->t.getEvent()==s1 && t.getStateTo()==END_1).findAny().isPresent());
