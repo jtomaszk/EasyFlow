@@ -1,16 +1,32 @@
 package au.com.ds.ef;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
  * Constructed sub-flow, can't be reused - uniqueness of state has to be preserved.
- * Events also has to be unique when provided as reference to ToHolder.subflow method
+ * Events has to be unique across all sub flows when provided as reference to ToHolder.subflow method
  *
  */
 public class IncompleteTransition extends RegularTransition {
+
+    public static class LateExecution implements Transition{
+
+        final Supplier<IncompleteTransition> factory;
+
+        final EventEnum event;
+
+        public LateExecution(Supplier<IncompleteTransition> factory, EventEnum event) {
+            this.factory = factory;
+            this.event = event;
+        }
+
+        @Override
+        public Transition transit(Transition... transitions) {
+            return factory.get().accept(event).transit(transitions);
+        }
+    }
 
     /**
      * Updates all transitions on(x).to(X) with stateFrom that comes from emit(x)

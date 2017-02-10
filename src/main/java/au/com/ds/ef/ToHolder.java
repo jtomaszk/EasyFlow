@@ -2,6 +2,7 @@ package au.com.ds.ef;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class ToHolder {
 
@@ -44,6 +45,10 @@ public class ToHolder {
 
     public Transition subFlow(IncompleteTransition incompleteTransition){
         return incompleteTransition.accept(event);
+    }
+
+    public Transition subFlow(Supplier<IncompleteTransition> itSupplier){
+        return new IncompleteTransition.LateExecution(itSupplier, event);
     }
 
     public Transition to(StateEnum state) {

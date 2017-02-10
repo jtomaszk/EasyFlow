@@ -21,15 +21,25 @@ public interface Transition {
         }
     }
 
-    EventEnum getEvent();
+    default EventEnum getEvent(){
+        throw new UnsupportedOperationException();
+    }
 
-    StateEnum getStateFrom();
+    default StateEnum getStateFrom(){
+        throw new UnsupportedOperationException();
+    }
 
-    StateEnum getStateTo();
+    default StateEnum getStateTo(){
+        throw new UnsupportedOperationException();
+    }
 
-    boolean isFinal();
+    default boolean isFinal(){
+        throw new UnsupportedOperationException();
+    }
 
-    void setStateFrom(StateEnum stateFrom);
+    default void setStateFrom(StateEnum stateFrom){
+        throw new UnsupportedOperationException();
+    }
 
     Transition transit(Transition... transitions);
 }

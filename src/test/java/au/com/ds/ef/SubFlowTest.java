@@ -5,6 +5,7 @@ import org.junit.*;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static au.com.ds.ef.SubFlowTest.Events.*;
 import static au.com.ds.ef.SubFlowTest.States.*;
@@ -275,5 +276,65 @@ public class SubFlowTest {
 
         //assert
         Assert.assertFalse(true);
+    }
+
+    @Test
+    public void shouldConnectSubFlowWithNonUniqueEventsWhenProfidedAsFunction() {
+
+        //arrange
+        List<Transition> withDefaults = Arrays.asList(
+                on(err).finish(END_ERR1),
+                on(err2).finish(END_ERR2),
+                on(bpInternalError).to(RBE).transit(
+                        on(beReported).finish(B_ERR)
+                )
+        );
+
+        Supplier<IncompleteTransition> SUBFLOW = ()-> IncompleteTransition.from(SF, withDefaults).transit(
+                on(c).to(C).transit(
+                        emit(s1),
+                        on(e).to(E).transit(
+                                emit(s2)
+                        )
+                )
+        );
+
+        Supplier<IncompleteTransition> SUBFLOW2 = ()-> IncompleteTransition.from(SF2, withDefaults).transit(
+                on(c).to(C2).transit(
+                        emit(s1),
+                        on(e).to(E2).transit(
+                                emit(s2)
+                        )
+                )
+        );
+
+        Flow<StatefulContext> flow = FlowBuilder.EnterFlowBuilder.from(START, withDefaults).transit(
+                on(a).to(A).transit(
+                        on(sf).subFlow(SUBFLOW).transit(
+                                on(s1).subFlow(SUBFLOW2).transit(
+                                        on(s1).finish(END_1),
+                                        on(s2).finish(END_2)
+                                ),
+                                on(s2).finish(END_1)
+                        )
+                )
+        ).executor(new SyncExecutor());
+
+        //act
+        flow.start(new StatefulContext());
+
+        //assert
+
+        Assert.assertTrue(flow.getAvailableTransitions(E).stream()
+                .filter(t->t.getEvent()==s2 && t.getStateTo()==END_1).findAny().isPresent());
+
+        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
+                .filter(t->t.getEvent()==s1 && t.getStateTo()==SF2).findAny().isPresent());
+
+        Assert.assertTrue(flow.getAvailableTransitions(C2).stream()
+                .filter(t->t.getEvent()==s1 && t.getStateTo()==END_1).findAny().isPresent());
+
+        Assert.assertTrue(flow.getAvailableTransitions(E2).stream()
+                .filter(t->t.getEvent()==s2 && t.getStateTo()==END_2).findAny().isPresent());
     }
 }
