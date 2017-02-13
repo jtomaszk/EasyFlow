@@ -31,11 +31,11 @@ public class IncompleteTransition extends RegularTransition {
     /**
      * Updates all transitions on(x).to(X) with stateFrom that comes from emit(x)
      */
-    public static class Stub implements Transition {
+    private static class Proxy implements Transition {
 
         private final IncompleteTransition target;
 
-        public Stub(IncompleteTransition incompleteTransition) {
+        public Proxy(IncompleteTransition incompleteTransition) {
             target = incompleteTransition;
         }
 
@@ -106,9 +106,9 @@ public class IncompleteTransition extends RegularTransition {
         return new IncompleteTransition(null, startState, dt);
     }
 
-    public Stub accept(EventEnum event){
+    public Proxy accept(EventEnum event){
         this.event = event;
-        return new Stub(this);
+        return new Proxy(this);
     }
 
     @Override
