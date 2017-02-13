@@ -279,6 +279,33 @@ public class SubFlowTest {
     }
 
     @Test
+    public void shouldWorkWithBackTo(){
+
+        //arrange
+        IncompleteTransition SUBFLOWF = IncompleteTransition.from(SF3).transit(
+                on(f).to(F).transit(
+                        on(e).finish(END_1)
+                )
+        );
+
+        Flow<StatefulContext> flow = FlowBuilder.EnterFlowBuilder.from(START).transit(
+                on(a).to(A).transit(
+                        on(sf).subFlow(SUBFLOWF),
+                        on(b).to(B).transit(
+                                on(c).backTo(SF3)
+                        )
+                )
+        ).executor(new SyncExecutor());
+
+        //act
+        flow.start(new StatefulContext());
+
+        //assert
+        Assert.assertTrue(flow.getAvailableTransitions(B).stream()
+                .filter(t->t.getEvent()==c && t.getStateTo()==SF3).findAny().isPresent());
+    }
+
+    @Test
     public void shouldConnectSubFlowWithNonUniqueEventsWhenProvidedAsFunction() {
 
         //arrange
