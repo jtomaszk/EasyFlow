@@ -11,11 +11,18 @@ import java.util.stream.Stream;
  */
 public class IncompleteTransition extends RegularTransition {
 
+    /**
+     * Use when cascading subflows with the same events could result in overriding transitions.
+     * Because creating transitions is postponed until transit method,
+     * supplier function with subflows can be used as final step.
+     */
     public static class LateExecution implements Transition{
 
         final Supplier<IncompleteTransition> factory;
 
         final EventEnum event;
+
+        private StateEnum stateFrom;
 
         public LateExecution(Supplier<IncompleteTransition> factory, EventEnum event) {
             this.factory = factory;
@@ -24,7 +31,19 @@ public class IncompleteTransition extends RegularTransition {
 
         @Override
         public Transition transit(Transition... transitions) {
-            return factory.get().accept(event).transit(transitions);
+            Proxy proxy = factory.get().accept(event);
+            proxy.setStateFrom(stateFrom);
+            return proxy.transit(transitions);
+        }
+
+        @Override
+        public void setStateFrom(StateEnum stateFrom) {
+            this.stateFrom = stateFrom;
+        }
+
+        @Override
+        public EventEnum getEvent() {
+            return event;
         }
     }
 

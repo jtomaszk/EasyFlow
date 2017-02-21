@@ -364,4 +364,38 @@ public class SubFlowTest {
         Assert.assertTrue(flow.getAvailableTransitions(E2).stream()
                 .filter(t->t.getEvent()==s2 && t.getStateTo()==END_2).findAny().isPresent());
     }
+
+
+    @Test
+    public void supplierSubFlowIsNotInvokedAtTheEnd() {
+
+        //arrange
+        List<Transition> withDefaults = Arrays.asList(
+                on(err).finish(END_ERR1),
+                on(err2).finish(END_ERR2),
+                on(bpInternalError).to(RBE).transit(
+                        on(beReported).finish(B_ERR)
+                )
+        );
+
+        Supplier<IncompleteTransition> SUBFLOW = ()-> IncompleteTransition.from(SF, withDefaults).transit(
+                on(c).to(C).transit(
+                        on(s1).finish(SF)
+                )
+        );
+
+        Flow<StatefulContext> flow = FlowBuilder.EnterFlowBuilder.from(START, withDefaults).transit(
+                on(a).to(A).transit(
+                        on(sf).subFlow(SUBFLOW)
+                )
+        ).executor(new SyncExecutor());
+
+        //act
+        flow.start(new StatefulContext());
+
+        //assert
+
+        Assert.assertFalse(flow.getAvailableTransitions(C).stream()
+                .filter(t->t.getEvent()==s1 && t.getStateTo()==SF).findAny().isPresent());
+    }
 }
