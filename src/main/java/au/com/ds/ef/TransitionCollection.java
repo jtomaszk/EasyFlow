@@ -42,7 +42,7 @@ final class TransitionCollection {
 
                 if (processedTransitions.stream()
                         .filter(pt->pt.getStateFrom()==transition.getStateFrom() &&
-                                pt.getEvent()==transition.getEvent()).findFirst().isPresent()) {
+                                pt.getEvent()==transition.getEvent()).findAny().isPresent()) {
                     throw new DefinitionError("Ambiguous transitions: " + transition);
                 }
 

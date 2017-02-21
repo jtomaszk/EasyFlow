@@ -1,7 +1,9 @@
 package au.com.ds.ef;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -88,6 +90,8 @@ public class IncompleteTransition extends RegularTransition {
          * match with sub transitions (ST) by event type.
          * Update ST state-from field.
          * Remove matched TE.
+         *
+         * Update with From value only not overridden default transitions
          */
         @Override
         public Transition transit(Transition... transitions) {
@@ -95,7 +99,15 @@ public class IncompleteTransition extends RegularTransition {
             Repository.get().removeIf( t->t.getStateTo() == null && updateOuterTransaction(t, transitions));
 
             if(target.defaultTransitions!=null) {
-                target.defaultTransitions.stream().forEach(t -> t.setStateFrom(target.getStateTo()));
+
+                Set<EventEnum> targetsEvents = Repository.get().stream()
+                        .filter(t -> t.getStateFrom() == target.getStateTo())
+                        .map(t->t.getEvent())
+                        .collect(Collectors.toSet());
+
+                target.defaultTransitions.stream()
+                        .filter(dt->targetsEvents.contains(dt.getEvent())==false)
+                        .forEach(t -> t.setStateFrom(target.getStateTo()));
             }
 
             return target;
