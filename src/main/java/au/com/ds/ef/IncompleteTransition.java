@@ -1,6 +1,7 @@
 package au.com.ds.ef;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -98,6 +99,10 @@ public class IncompleteTransition extends RegularTransition {
 
             Repository.get().removeIf( t->t.getStateTo() == null && updateOuterTransaction(t, transitions));
 
+            Repository.get().stream()
+                    .filter( t->t.getStateTo() == null)
+                    .forEach( t-> updateInnerTransactions(t, transitions));
+
             if(target.defaultTransitions!=null) {
 
                 Set<EventEnum> targetsEvents = Repository.get().stream()
@@ -113,6 +118,19 @@ public class IncompleteTransition extends RegularTransition {
             return target;
         }
 
+        //update inner transition, it happens when sub-flows emits same event more than once
+        private void updateInnerTransactions(Transition innerT, Transition[] transitions) {
+
+            Optional<Transition> outerTransitionOpt = Stream.of(transitions)
+                    .filter(t -> t.getEvent() == innerT.getEvent())
+                    .findFirst();
+
+            if(outerTransitionOpt.isPresent()){
+                innerT.setStateTo(outerTransitionOpt.get().getStateTo());
+            }
+        }
+
+        //updates outer transitions with stateFrom from sub-flow emits
         private boolean updateOuterTransaction(Transition innerT, Transition[] transitions) {
             return Stream.of(transitions)
                     .filter(t -> t.getStateFrom() == null && t.getEvent() == innerT.getEvent())

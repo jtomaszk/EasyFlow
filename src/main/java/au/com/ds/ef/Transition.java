@@ -41,5 +41,11 @@ public interface Transition {
         throw new UnsupportedOperationException();
     }
 
+    default void setStateTo(StateEnum stateTo){
+        throw new UnsupportedOperationException();
+    }
+
     Transition transit(Transition... transitions);
+
+    default Transition map(EventEnum replacement){ return this; }
 }
