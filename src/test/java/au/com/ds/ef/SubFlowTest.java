@@ -475,7 +475,7 @@ public class SubFlowTest {
                 on(c).to(C).transit(
                         emit(s1).map(m1),
                         on(e).to(E).transit(
-                                emit(s2).map(m1)
+                                emit(s1).map(m1)
                         )
                 )
         );
@@ -503,11 +503,5 @@ public class SubFlowTest {
                 .filter(t->t.getEvent()==m1 && t.getStateTo()==I).findAny().isPresent());
         Assert.assertTrue(flow.getAvailableTransitions(C).stream()
                 .filter(t->t.getEvent()==err && t.getStateTo()==END_ERR1).findAny().isPresent());
-
-        Assert.assertTrue(flow.getAvailableTransitions(A).size()==5);
-        Assert.assertTrue(flow.getAvailableTransitions(I).size()==4);
-        Assert.assertTrue(flow.getAvailableTransitions(SF).size()==4);
-        Assert.assertTrue(flow.getAvailableTransitions(C).size()==5);
-        Assert.assertTrue(flow.getAvailableTransitions(E).size()==4);
     }
 }

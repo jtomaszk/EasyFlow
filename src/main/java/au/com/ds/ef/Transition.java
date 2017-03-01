@@ -47,7 +47,5 @@ public interface Transition {
 
     Transition transit(Transition... transitions);
 
-    default Transition map(EventEnum replacement) {
-        throw new UnsupportedOperationException();
-    }
+    default Transition map(EventEnum replacement){ return this; }
 }
