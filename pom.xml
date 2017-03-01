@@ -9,7 +9,7 @@
 
 	<groupId>au.com.datasymphony</groupId>
 	<artifactId>EasyFlow</artifactId>
-	<version>1.6.4-SNAPSHOT</version>
+	<version>1.7.0</version>
 	<packaging>jar</packaging>
 	<name>EasyFlow</name>
 	<description>EasyFlow - Simple and lightweight Finite State Machine</description>

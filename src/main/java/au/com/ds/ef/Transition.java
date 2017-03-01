@@ -1,6 +1,7 @@
 package au.com.ds.ef;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public interface Transition {
@@ -39,6 +40,14 @@ public interface Transition {
 
     default void setStateFrom(StateEnum stateFrom){
         throw new UnsupportedOperationException();
+    }
+
+    default void propagateStateFrom(StateEnum stateFrom){
+        throw new UnsupportedOperationException();
+    }
+
+    default List<Transition> getDerivedTransitions(){
+        return Collections.emptyList();
     }
 
     Transition transit(Transition... transitions);
