@@ -19,7 +19,7 @@ public class SubFlowTest {
     }
 
     public enum Events implements EventEnum {
-        a, s11,s22,sf, sf2, b, c, s1, s2, e, err, err2,bpInternalError, beReported, f, m1,m2
+        a, s11,s22,sf, sf2, b, c, s1, s2, e, err, err2,bpInternalError, beReported, f
     }
 
     @After
@@ -457,51 +457,5 @@ public class SubFlowTest {
 
         Assert.assertFalse(flow.getAvailableTransitions(C).stream()
                 .filter(t->t.getEvent()==s1 && t.getStateTo()==SF).findAny().isPresent());
-    }
-
-    @Test
-    public void shouldConnectEmittedWithDefaultsAndDoEventsMapping() {
-
-        //arrange
-        List<Transition> withDefaults = Arrays.asList(
-                on(err).finish(END_ERR1),
-                on(err2).finish(END_ERR2),
-                on(bpInternalError).to(RBE).transit(
-                        on(beReported).finish(B_ERR)
-                )
-        );
-
-        IncompleteTransition SUBFLOW = IncompleteTransition.from(SF, withDefaults).transit(
-                on(c).to(C).transit(
-                        emit(s1).map(m1),
-                        on(e).to(E).transit(
-                                emit(s1).map(m1)
-                        )
-                )
-        );
-
-        Flow<StatefulContext> flow = FlowBuilder.EnterFlowBuilder.from(START, withDefaults).transit(
-                on(a).to(A).transit(
-                        on(sf).subFlow(SUBFLOW).transit(
-                                on(m1).to(I).transit(
-                                        on(e).finish(END_1)
-                                )
-                        ),
-                        on(b).finish(END_1)
-                )
-        ).executor(new SyncExecutor());
-
-        //act
-        flow.start(new StatefulContext());
-
-        //assert
-        Assert.assertTrue(flow.getAvailableTransitions(A).stream()
-                .filter(t->t.getEvent()==sf && t.getStateTo()==SF).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
-                .filter(t->t.getEvent()==m1 && t.getStateTo()==I).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(E).stream()
-                .filter(t->t.getEvent()==m1 && t.getStateTo()==I).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
-                .filter(t->t.getEvent()==err && t.getStateTo()==END_ERR1).findAny().isPresent());
     }
 }

@@ -42,11 +42,6 @@ public class RegularTransition implements Transition{
         return this;
     }
 
-    public Transition map(EventEnum replacement){
-        event = replacement;
-        return this;
-    }
-
     //
 
     public EventEnum getEvent() {
@@ -63,10 +58,6 @@ public class RegularTransition implements Transition{
 
     public StateEnum getStateTo() {
         return stateTo;
-    }
-
-    public void setStateTo(StateEnum stateTo) {
-        this.stateTo = stateTo;
     }
 
     public boolean isFinal() {
