@@ -18,6 +18,8 @@ public class TransitionUtil {
     }
 
     private static boolean isOverridePresent(Transition dt, Transition[] transitions) {
-        return Arrays.stream(transitions).filter(t -> t.getEvent()==dt.getEvent()).findAny().isPresent();
+        return Arrays.stream(transitions)
+                .flatMap(t->Stream.concat(Arrays.asList(t).stream(),t.getDerivedTransitions().stream()))
+                .filter(t -> t.getEvent()==dt.getEvent()).findAny().isPresent();
     }
 }

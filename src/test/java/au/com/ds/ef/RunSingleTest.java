@@ -8,10 +8,7 @@ import au.com.ds.ef.err.ExecutionError;
 import au.com.ds.ef.err.LogicViolationError;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.from;
 import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.fromTransitions;
@@ -149,12 +146,24 @@ public class RunSingleTest {
 
 	@Test
 	public void testEventsOrderTransitionCollection() throws LogicViolationError {
+
+        RegularTransition t1 = RegularTransition.createSingleTransition(event_1, STATE_1, false);
+        t1.setStateFrom(START);
+
+        RegularTransition t2 = RegularTransition.createSingleTransition(event_2, STATE_2, true);
+        t2.setStateFrom(STATE_1);
+
+        RegularTransition t3 = RegularTransition.createSingleTransition(event_3, STATE_3, false);
+        t3.setStateFrom(STATE_1);
+
+        RegularTransition t4 = RegularTransition.createSingleTransition(event_4, STATE_1, false);
+        t4.setStateFrom(STATE_3);
+
+        RegularTransition t5 = RegularTransition.createSingleTransition(event_5, STATE_4, true);
+        t5.setStateFrom(STATE_3);
+
         List<Transition> transitions = asList(
-                new RegularTransition(event_1, START, STATE_1, false),
-                new RegularTransition(event_2, STATE_1, STATE_2, true),
-                new RegularTransition(event_3, STATE_1, STATE_3, false),
-                new RegularTransition(event_4, STATE_3, STATE_1, false),
-                new RegularTransition(event_5, STATE_3, STATE_4, true)
+                t1, t2, t3, t4, t5
         );
 
         EasyFlow<StatefulContext> flow = fromTransitions(START, transitions, false);
@@ -224,6 +233,8 @@ public class RunSingleTest {
                 throw new RuntimeException("Events called not in order expected: " + i + " actual: " + order);
             }
         }
+
+        Transition.Repository.consume();
     }
 
     @Test

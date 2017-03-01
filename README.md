@@ -1,3 +1,29 @@
+# EasyFlow brightpearl extensions.
+
+## `EnterFlow`
+
+Simplified version of EasyFlow, actions are triggered only when entering state, when error or final.
+
+## with defaults
+
+`from(INITIALIZING, withDefaults)`
+Creates set of default transitions which will be applied to every step state in flow.
+Overriding is possible.
+
+## `backTo`
+
+Generates transition to already defined state.
+
+## subFlow
+
+Allows to decompose flow into separate expressions : `on(orderTotalsCorrect).subFlow(CHECK_STOCK)` 
+- `IncompleteTransition` has methods necessary from creating subflow : `IncompleteTransition.from(CREATING_RESERVATION_NOTE, withDefaults).transit( ... )`
+- `emit(eventA)` declares event emission, and in downstream this event is bounded by `on(eventA).to(...)`
+
+## derived transitions
+
+- `on(eventA, eventB, eventC).to(X).transit( ... )` 
+
 EasyFlow
 ========
 by [DataSymphony.com.au](http://datasymphony.com.au/)

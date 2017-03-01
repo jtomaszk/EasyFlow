@@ -1,5 +1,7 @@
 package au.com.ds.ef;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -33,13 +35,13 @@ public class IncompleteTransition extends RegularTransition {
 
         @Override
         public Transition transit(Transition... transitions) {
-            Proxy proxy = factory.get().accept(event);
-            proxy.setStateFrom(stateFrom);
+            Proxy proxy = factory.get().accept(new ArrayList<>(Arrays.asList(event)));
+            proxy.propagateStateFrom(stateFrom);
             return proxy.transit(transitions);
         }
 
         @Override
-        public void setStateFrom(StateEnum stateFrom) {
+        public void propagateStateFrom(StateEnum stateFrom) {
             this.stateFrom = stateFrom;
         }
 
@@ -52,7 +54,7 @@ public class IncompleteTransition extends RegularTransition {
     /**
      * Updates all transitions on(x).to(X) with stateFrom that comes from emit(x)
      */
-    private static class Proxy implements Transition {
+    static class Proxy implements Transition {
 
         private final IncompleteTransition target;
 
@@ -78,6 +80,16 @@ public class IncompleteTransition extends RegularTransition {
         @Override
         public boolean isFinal() {
             return target.isFinal();
+        }
+
+        @Override
+        public List<Transition> getDerivedTransitions() {
+            return target.getDerivedTransitions();
+        }
+
+        @Override
+        public void propagateStateFrom(StateEnum stateFrom) {
+            target.propagateStateFrom(stateFrom);
         }
 
         @Override
@@ -107,7 +119,7 @@ public class IncompleteTransition extends RegularTransition {
 
                 target.defaultTransitions.stream()
                         .filter(dt->targetsEvents.contains(dt.getEvent())==false)
-                        .forEach(t -> t.setStateFrom(target.getStateTo()));
+                        .forEach(t -> t.propagateStateFrom(target.getStateTo()));
             }
 
             return target;
@@ -115,16 +127,17 @@ public class IncompleteTransition extends RegularTransition {
 
         private boolean updateOuterTransaction(Transition innerT, Transition[] transitions) {
             return Stream.of(transitions)
+                    .flatMap(t->Stream.concat(Arrays.asList(t).stream(),t.getDerivedTransitions().stream()))
                     .filter(t -> t.getStateFrom() == null && t.getEvent() == innerT.getEvent())
                     .findFirst()
-                    .map( tr->{
-                        tr.setStateFrom(innerT.getStateFrom());
+                    .map( t->{
+                        t.setStateFrom(innerT.getStateFrom());
                         return true;
                     }).orElse(Boolean.FALSE);
         }
     }
 
-    public IncompleteTransition(EventEnum event, StateEnum stateTo, List<Transition> defaultTransitions) {
+    public IncompleteTransition(List<EventEnum> event, StateEnum stateTo, List<Transition> defaultTransitions) {
         super(event, stateTo, false, defaultTransitions);
     }
 
@@ -137,8 +150,15 @@ public class IncompleteTransition extends RegularTransition {
         return new IncompleteTransition(null, startState, dt);
     }
 
-    public Proxy accept(EventEnum event){
-        this.event = event;
+    public Proxy accept(List<EventEnum> events){
+        this.event = events.remove(0);
+
+        if(events.size()>1) {
+            this.derivedTransitions = events.stream()
+                    .map(e -> new RegularTransition(e, this.getStateTo(), this.isFinal()))
+                    .collect(Collectors.toList());
+        }
+
         return new Proxy(this);
     }
 

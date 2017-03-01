@@ -56,7 +56,7 @@ public class FlowBuilder<F extends Flow> {
 
     public F transit(boolean skipValidation, List<Transition> dt, Transition... transitions) {
 
-        TransitionUtil.composeTransitions(dt, transitions).forEach( t -> t.setStateFrom(flow.getStartState()));
+        TransitionUtil.composeTransitions(dt, transitions).forEach( t -> t.propagateStateFrom(flow.getStartState()));
 
         flow.processAllTransitions(skipValidation);
 

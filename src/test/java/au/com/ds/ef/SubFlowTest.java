@@ -78,6 +78,65 @@ public class SubFlowTest {
     }
 
     @Test
+    public void shouldAcceptMultipleEvents() {
+
+        //arrange
+        List<Transition> withDefaults = Arrays.asList(
+                on(err).finish(END_ERR1),
+                on(err2).finish(END_ERR2),
+                on(bpInternalError).to(RBE).transit(
+                        on(beReported).finish(B_ERR)
+                )
+        );
+
+        IncompleteTransition SUBFLOW = IncompleteTransition.from(SF, withDefaults).transit(
+                on(c).to(C).transit(
+                        emit(s1),
+                        on(e).to(E).transit(
+                                emit(s2)
+                        )
+                ),
+                emit(s11)
+        );
+
+        Flow<StatefulContext> flow = FlowBuilder.EnterFlowBuilder.from(START, withDefaults).transit(
+                on(a,bpInternalError).to(A).transit(
+                        on(sf).subFlow(SUBFLOW).transit(
+                                on(s1, s2).to(I).transit(
+                                        on(e).finish(END_1)
+                                ),
+                                on(s11).finish(J)
+                        ),
+                        on(b).finish(END_1)
+                )
+        ).executor(new SyncExecutor());
+
+        //act
+        flow.start(new StatefulContext());
+
+        //assert
+        Assert.assertTrue(flow.getAvailableTransitions(START).stream()
+                .filter(t->t.getEvent()==bpInternalError && t.getStateTo()==A).findAny().isPresent());
+        Assert.assertTrue(flow.getAvailableTransitions(START).stream()
+                .filter(t->t.getEvent()==a && t.getStateTo()==A).findAny().isPresent());
+        Assert.assertTrue(flow.getAvailableTransitions(A).stream()
+                .filter(t->t.getEvent()==sf && t.getStateTo()==SF).findAny().isPresent());
+        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
+                .filter(t->t.getEvent()==s1 && t.getStateTo()==I).findAny().isPresent());
+        Assert.assertTrue(flow.getAvailableTransitions(E).stream()
+                .filter(t->t.getEvent()==s2 && t.getStateTo()==I).findAny().isPresent());
+        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
+                .filter(t->t.getEvent()==err && t.getStateTo()==END_ERR1).findAny().isPresent());
+        Assert.assertTrue(flow.getAvailableTransitions(SF).stream()
+                .filter(t->t.getEvent()==s11 && t.getStateTo()==J).findAny().isPresent());
+
+        Assert.assertTrue(flow.getAvailableTransitions(C).stream().count()==5);
+        Assert.assertTrue(flow.getAvailableTransitions(E).stream().count()==4);
+        Assert.assertTrue(flow.getAvailableTransitions(SF).stream().count()==5);
+        Assert.assertTrue(flow.getAvailableTransitions(START).stream().count()==4);
+    }
+
+    @Test
     public void shouldOverrideDefaultsInIncompleteTransition() {
 
         //arrange
