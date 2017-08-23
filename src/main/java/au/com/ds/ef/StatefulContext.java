@@ -18,7 +18,6 @@ public class StatefulContext implements Serializable {
 	private final AtomicBoolean terminated = new AtomicBoolean(false);
 	private final AtomicBoolean stopped = new AtomicBoolean(false);
 	private final CountDownLatch completionLatch = new CountDownLatch(1);
-    private Optional<RunnableWrapper> runnableWrapper = Optional.empty();
 
 	public StatefulContext() {
 		id = newId() + ":" + getClass().getSimpleName();
@@ -114,18 +113,6 @@ public class StatefulContext implements Serializable {
             this.completionLatch.await();
         } catch (InterruptedException e) {
             Thread.interrupted();
-        }
-    }
-
-    public void setRunnableWrapper(RunnableWrapper runnableWrapper) {
-        this.runnableWrapper = Optional.of(runnableWrapper);
-    }
-
-    public RunnableWrapper getRunnableWrapper() {
-        if (runnableWrapper.isPresent()) {
-            return new RunnableWrapper(runnableWrapper.get());
-        } else {
-            return new RunnableWrapper.NoWrapping();
         }
     }
 

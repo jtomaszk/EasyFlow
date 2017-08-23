@@ -80,8 +80,8 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
     }
 
     protected void transit(final StateEnum condition, final StateEnum targetState, final boolean enterInitialState, final C context) {
-        RunnableWrapper wrapper = context.getRunnableWrapper();
-        wrapper.setRunnableMethod(() -> {
+
+        execute(context, () -> {
             if (!enterInitialState) {
                 StateEnum prevState = context.getStateValue();
                 if (prevState != null) {
@@ -94,11 +94,9 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
             }
 
         });
-
-        execute(wrapper, context);
     }
 
-    protected void execute(Runnable task, final C context) {
+    protected void execute(final C context, Runnable task) {
         if (!context.isTerminated()) {
             executor.execute(task);
         }
@@ -213,8 +211,7 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
 
         if (transition != null) {
 
-            RunnableWrapper wrapper = context.getRunnableWrapper();
-            wrapper.setRunnableMethod(() -> {
+            execute(context, () -> {
                 try {
                     StateEnum stateTo = transition.getStateTo();
                     if (isTrace())
@@ -232,7 +229,6 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
                 }
             });
 
-            execute(wrapper, context);
         } else if (!safe) {
             throw new LogicViolationError("Invalid Event: " + event +
                     " triggered while in State: " + context.getStateValue() + " for " + context);

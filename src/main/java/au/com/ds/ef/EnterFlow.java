@@ -179,10 +179,8 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
     }
 
     void transit(final StateEnum targetState, final C context) {
-        RunnableWrapper wrapper = context.getRunnableWrapper();
-        wrapper.setRunnableMethod(() -> enter(targetState, context));
         if (!context.isTerminated()) {
-            executor.execute(wrapper);
+            executor.execute(() -> enter(targetState, context));
         }
     }
 
