@@ -1,0 +1,7 @@
+---
+FORMAT: 2
+name: easy-flow
+version: '1.8'
+type: maven_lib
+git: https://github.com/Brightpearl/EasyFlow.git
+upstream: []
