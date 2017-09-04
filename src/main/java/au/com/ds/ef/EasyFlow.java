@@ -8,16 +8,17 @@ import au.com.ds.ef.err.ExecutionError;
 import au.com.ds.ef.err.LogicViolationError;
 import au.com.ds.ef.log.FlowLogger;
 import au.com.ds.ef.log.FlowLoggerImpl;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 import static au.com.ds.ef.HandlerCollection.EventType;
 
-public class EasyFlow<C extends StatefulContext> implements Flow<C> {
+public class EasyFlow<C extends StatefulContext> extends Flow<C> {
     public class DefaultErrorHandler implements ExecutionErrorHandler<StatefulContext> {
         @Override
         public void call(ExecutionError error, StatefulContext context) {
@@ -47,9 +48,15 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
     }
 
     public void processAllTransitions(boolean skipValidation) {
-        List<Transition> cTransitions = RegularTransition.Repository.consume();
+        List<Transition> cTransitions = Transition.Repository.consume();
         if (cTransitions != null) {
-            cTransitions = cTransitions.stream().filter(t -> t.getStateFrom() != null).collect(Collectors.toList());
+            cTransitions = FluentIterable.from(cTransitions)
+                    .filter(new Predicate<Transition>() {
+                        @Override
+                        public boolean apply(Transition t) {
+                            return t.getStateFrom() != null;
+                        }
+                    }).toList();
         }
         transitions = new TransitionCollection(cTransitions, !skipValidation);
     }
@@ -81,18 +88,20 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
 
     protected void transit(final StateEnum condition, final StateEnum targetState, final boolean enterInitialState, final C context) {
 
-        execute(context, () -> {
-            if (!enterInitialState) {
-                StateEnum prevState = context.getStateValue();
-                if (prevState != null) {
-                    leave(prevState, context);
+        execute(context, new Runnable() {
+            @Override
+            public void run() {
+                if (!enterInitialState) {
+                    StateEnum prevState = context.getStateValue();
+                    if (prevState != null) {
+                        leave(prevState, context);
+                    }
+                }
+
+                if (casState(context, condition, targetState)) {
+                    enter(targetState, context);
                 }
             }
-
-            if (casState(context, condition, targetState)) {
-                enter(targetState, context);
-            }
-
         });
     }
 
@@ -105,65 +114,65 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
     protected boolean casState(final C context, StateEnum expectedState, StateEnum targetState) {
         if (expectedState != null) {
             return context.getStateRef().compareAndSet(expectedState, targetState);
-        }else{
+        } else {
             context.getStateRef().set(targetState);
             return true;
         }
     }
 
-    public Flow<C> whenEvent(EventEnum event, ContextHandler<C> onEvent) {
+    public EasyFlow<C> whenEvent(EventEnum event, ContextHandler<C> onEvent) {
         handlers.setHandler(EventType.EVENT_TRIGGER, null, event, onEvent);
         return this;
     }
 
-    public Flow<C> whenEvent(EventHandler<C> onEvent) {
+    public EasyFlow<C> whenEvent(EventHandler<C> onEvent) {
         handlers.setHandler(EventType.ANY_EVENT_TRIGGER, null, null, onEvent);
         return this;
     }
 
-    public Flow<C> whenEnter(StateEnum state, ContextHandler<? extends C> onEnter) {
+    public EasyFlow<C> whenEnter(StateEnum state, ContextHandler<? extends C> onEnter) {
         handlers.setHandler(EventType.STATE_ENTER, state, null, onEnter);
         return this;
     }
 
-    public Flow<C> whenEnter(StateHandler<C> onEnter) {
+    public EasyFlow<C> whenEnter(StateHandler<C> onEnter) {
         handlers.setHandler(EventType.ANY_STATE_ENTER, null, null, onEnter);
         return this;
     }
 
-    public Flow<C> whenLeave(StateEnum state, ContextHandler<C> onEnter) {
+    public EasyFlow<C> whenLeave(StateEnum state, ContextHandler<C> onEnter) {
         handlers.setHandler(EventType.STATE_LEAVE, state, null, onEnter);
         return this;
     }
 
-    public Flow<C> whenLeave(StateHandler<C> onEnter) {
+    public EasyFlow<C> whenLeave(StateHandler<C> onEnter) {
         handlers.setHandler(EventType.ANY_STATE_LEAVE, null, null, onEnter);
         return this;
     }
 
-    public Flow<C> whenError(ExecutionErrorHandler<C> onError) {
+    public EasyFlow<C> whenError(ExecutionErrorHandler<C> onError) {
         handlers.setHandler(EventType.ERROR, null, null, onError);
         return this;
     }
 
-    public Flow<C> whenFinalState(StateHandler<C> onFinalState) {
+    public EasyFlow<C> whenFinalState(StateHandler<C> onFinalState) {
         handlers.setHandler(EventType.FINAL_STATE, null, null, onFinalState);
         return this;
     }
 
-    public <C1 extends StatefulContext> EasyFlow<C1> executor(Executor executor) {
+    public EasyFlow<C> executor(Executor executor) {
         this.executor = executor;
-        return (EasyFlow<C1>) this;
+        return this;
     }
 
-    public <C1 extends StatefulContext> EasyFlow<C1> trace() {
+    public EasyFlow<C> trace() {
         trace = true;
-        return (EasyFlow<C1>) this;
+        return this;
     }
 
-    public <C1 extends StatefulContext> EasyFlow<C1> logger(FlowLogger log) {
+    public EasyFlow<C> logger(FlowLogger log) {
         this.log = log;
-        return (EasyFlow<C1>) this;
+        return this;
     }
 
     public List<Transition> getAvailableTransitions(StateEnum stateFrom) {
@@ -176,6 +185,7 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
         }
         return false;
     }
+
     public boolean trigger(final EventEnum event, final C context) throws LogicViolationError {
         return trigger(event, context, null, false);
     }
@@ -187,6 +197,7 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
             return false;
         }
     }
+
     public boolean conditionTrigger(final EventEnum event, final C context, final StateEnum condition) throws LogicViolationError {
         return trigger(event, context, condition, false);
     }
@@ -205,27 +216,31 @@ public class EasyFlow<C extends StatefulContext> implements Flow<C> {
         final StateEnum stateFrom = context.getStateValue();
         final Transition transition = transitions.getTransition(stateFrom, event);
 
-        if (condition!=null && stateFrom != condition) {
+        if (condition != null && stateFrom != condition) {
             return false;
         }
 
         if (transition != null) {
 
-            execute(context, () -> {
-                try {
-                    StateEnum stateTo = transition.getStateTo();
-                    if (isTrace())
-                        log.info("when triggered %s in %s for %s <<<", event, stateFrom, context);
+            execute(context, new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        StateEnum stateTo = transition.getStateTo();
+                        if (isTrace())
+                            log.info("when triggered %s in %s for %s <<<", event, stateFrom, context);
 
-                    handlers.callOnEventTriggered(event, stateFrom, stateTo, context);
+                        handlers.callOnEventTriggered(event, stateFrom, stateTo, context);
 
-                    if (isTrace())
-                        log.info("when triggered %s in %s for %s >>>", event, stateFrom, context);
+                        if (isTrace())
+                            log.info("when triggered %s in %s for %s >>>", event, stateFrom, context);
 
-                    transit(condition, stateTo, false, context);
-                } catch (Exception e) {
-                    doOnError(new ExecutionError(stateFrom, event, e,
-                            "Execution Error in [trigger]", context));
+                        transit(condition, stateTo, false, context);
+                    } catch (Exception e) {
+                        doOnError(new ExecutionError(stateFrom, event, e,
+                                "Execution Error in [trigger]", context));
+                    }
+
                 }
             });
 

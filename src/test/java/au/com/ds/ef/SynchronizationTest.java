@@ -52,39 +52,39 @@ public class SynchronizationTest {
 
             flow =
 
-                from(UNINITIALIZED).transit(
-                    on(initialize).to(RUNNING).transit(
-                        on(terminate).finish(DONE)
-                    )
-                );
+                    from(UNINITIALIZED).transit(
+                            on(initialize).to(RUNNING).transit(
+                                    on(terminate).finish(DONE)
+                            )
+                    );
 
             flow
-                .whenEnter(UNINITIALIZED, new ContextHandler<StatefulContext>() {
-                    @Override
-                    public void call(StatefulContext context) throws Exception {
-                        System.out.println(getThreadName() + " unitialized:Enter");
-                        context.trigger(initialize);
-                    }
-                })
-
-                .whenEnter(RUNNING, new ContextHandler<StatefulContext>() {
-                    @Override
-                    public void call(StatefulContext context) throws Exception {
-                        System.out.println(getThreadName() + " runnig:Enter");
-                        for (int i = 0; i < 10; i++) {
-                            System.out.println(getThreadName() + " running");
-                            Thread.sleep(1000);
+                    .whenEnter(UNINITIALIZED, new ContextHandler<StatefulContext>() {
+                        @Override
+                        public void call(StatefulContext context) throws Exception {
+                            System.out.println(getThreadName() + " unitialized:Enter");
+                            context.trigger(initialize);
                         }
-                        context.trigger(terminate);
-                    }
-                })
+                    })
 
-                .whenFinalState(new StateHandler<StatefulContext>() {
-                    @Override
-                    public void call(StateEnum state, StatefulContext context) throws Exception {
-                        System.out.println(getThreadName() + " final");
-                    }
-                });
+                    .whenEnter(RUNNING, new ContextHandler<StatefulContext>() {
+                        @Override
+                        public void call(StatefulContext context) throws Exception {
+                            System.out.println(getThreadName() + " runnig:Enter");
+                            for (int i = 0; i < 10; i++) {
+                                System.out.println(getThreadName() + " running");
+                                Thread.sleep(1000);
+                            }
+                            context.trigger(terminate);
+                        }
+                    })
+
+                    .whenFinalState(new StateHandler<StatefulContext>() {
+                        @Override
+                        public void call(StateEnum state, StatefulContext context) throws Exception {
+                            System.out.println(getThreadName() + " final");
+                        }
+                    });
         }
 
         @Override

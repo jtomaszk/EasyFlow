@@ -11,7 +11,7 @@ public class FlowBuilder<F extends Flow> {
         this.flow = flow;
     }
 
-    public static class EasyFlowBuilder extends FlowBuilder<EasyFlow>{
+    public static class EasyFlowBuilder extends FlowBuilder<EasyFlow> {
 
         private EasyFlowBuilder(StateEnum startState) {
             super(new EasyFlow(startState));
@@ -56,7 +56,9 @@ public class FlowBuilder<F extends Flow> {
 
     public F transit(boolean skipValidation, List<Transition> dt, Transition... transitions) {
 
-        TransitionUtil.composeTransitions(dt, transitions).forEach( t -> t.propagateStateFrom(flow.getStartState()));
+        List<Transition> list = TransitionUtil.composeTransitions(dt, transitions);
+        for (Transition t : list)
+            t.propagateStateFrom(flow.getStartState());
 
         flow.processAllTransitions(skipValidation);
 

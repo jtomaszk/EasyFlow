@@ -7,8 +7,8 @@ public class SyncExecutor implements Executor {
     private ArrayList<Runnable> queue = new ArrayList<Runnable>();
     private boolean running = false;
 
-	@Override
-	public void execute(Runnable task) {
+    @Override
+    public void execute(Runnable task) {
         queue.add(task);
 
         if (!running) {

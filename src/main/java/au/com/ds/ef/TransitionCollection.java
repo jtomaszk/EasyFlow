@@ -1,6 +1,8 @@
 package au.com.ds.ef;
 
 import au.com.ds.ef.err.DefinitionError;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 
 import java.util.*;
 
@@ -10,15 +12,15 @@ import java.util.*;
  * Time: 2:08 PM
  */
 final class TransitionCollection {
-    private Map<StateEnum, Map<EventEnum, Transition>> transitionFromState = new HashMap<>();
-    private Set<StateEnum> finalStates = new HashSet<>();
+    private Map<StateEnum, Map<EventEnum, Transition>> transitionFromState = new HashMap<StateEnum, Map<EventEnum, Transition>>();
+    private Set<StateEnum> finalStates = new HashSet<StateEnum>();
 
     protected TransitionCollection(Collection<Transition> transitions, boolean validate) {
         if (transitions != null) {
             for (Transition transition : transitions) {
                 Map<EventEnum, Transition> map = transitionFromState.get(transition.getStateFrom());
                 if (map == null) {
-                    map = new HashMap<>();
+                    map = new HashMap<EventEnum, Transition>();
                     transitionFromState.put(transition.getStateFrom(), map);
                 }
                 map.put(transition.getEvent(), transition);
@@ -33,16 +35,21 @@ final class TransitionCollection {
                 throw new DefinitionError("No transitions defined");
             }
 
-            Set<Transition> processedTransitions = new HashSet<>();
-            for (Transition transition : transitions) {
+            Set<Transition> processedTransitions = new HashSet<Transition>();
+            for (final Transition transition : transitions) {
                 StateEnum stateFrom = transition.getStateFrom();
                 if (finalStates.contains(stateFrom)) {
                     throw new DefinitionError("Some events defined for final State: " + stateFrom);
                 }
 
-                if (processedTransitions.stream()
-                        .filter(pt->pt.getStateFrom()==transition.getStateFrom() &&
-                                pt.getEvent()==transition.getEvent()).findAny().isPresent()) {
+                if (FluentIterable.from(processedTransitions)
+                        .anyMatch(new Predicate<Transition>() {
+                            @Override
+                            public boolean apply(Transition pt) {
+                                return pt.getStateFrom() == transition.getStateFrom() &&
+                                        pt.getEvent() == transition.getEvent();
+                            }
+                        })) {
                     throw new DefinitionError("Ambiguous transitions: " + transition);
                 }
 
@@ -68,7 +75,7 @@ final class TransitionCollection {
 
     public List<Transition> getTransitions(StateEnum stateFrom) {
         Map<EventEnum, Transition> transitionMap = transitionFromState.get(stateFrom);
-        return transitionMap == null ? Collections.<Transition>emptyList() : new ArrayList<>(transitionMap.values());
+        return transitionMap == null ? Collections.<Transition>emptyList() : new ArrayList<Transition>(transitionMap.values());
     }
 
     protected boolean isFinal(StateEnum state) {

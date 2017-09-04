@@ -1,7 +1,6 @@
 package au.com.ds.ef.log;
 
 import au.com.ds.ef.Flow;
-import au.com.ds.ef.log.FlowLogger;
 
 import java.lang.reflect.Method;
 

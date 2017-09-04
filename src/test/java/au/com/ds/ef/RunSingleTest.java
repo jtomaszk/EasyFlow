@@ -6,16 +6,19 @@ import au.com.ds.ef.call.ExecutionErrorHandler;
 import au.com.ds.ef.call.StateHandler;
 import au.com.ds.ef.err.ExecutionError;
 import au.com.ds.ef.err.LogicViolationError;
+import com.google.common.collect.Lists;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.from;
 import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.fromTransitions;
 import static au.com.ds.ef.RunSingleTest.Events.*;
 import static au.com.ds.ef.RunSingleTest.States.*;
 import static au.com.ds.ef.ToHolder.on;
-import static java.util.Arrays.asList;
 import static junit.framework.TestCase.*;
 
 public class RunSingleTest {
@@ -34,27 +37,27 @@ public class RunSingleTest {
         // state machine definition
         final EasyFlow<StatefulContext> flow =
 
-            from(START).transit(
-                on(event_1).to(STATE_1).transit(
-                    on(event_2).finish(STATE_2)
-                )
-            );
+                from(START).transit(
+                        on(event_1).to(STATE_1).transit(
+                                on(event_2).finish(STATE_2)
+                        )
+                );
 
         // handlers definition
         flow
-            .whenError(new ExecutionErrorHandler() {
-                @Override
-                public void call(ExecutionError error, StatefulContext context) {
-                    exception[0] = error;
-                }
-            })
+                .whenError(new ExecutionErrorHandler() {
+                    @Override
+                    public void call(ExecutionError error, StatefulContext context) {
+                        exception[0] = error;
+                    }
+                })
 
-            .whenEnter(START, new ContextHandler<StatefulContext>() {
-                @Override
-                public void call(StatefulContext context) throws Exception {
-                    context.trigger(event_2);
-                }
-            });
+                .whenEnter(START, new ContextHandler<StatefulContext>() {
+                    @Override
+                    public void call(StatefulContext context) throws Exception {
+                        context.trigger(event_2);
+                    }
+                });
 
         StatefulContext ctx = new StatefulContext();
         flow.trace().start(ctx);
@@ -65,74 +68,74 @@ public class RunSingleTest {
         assertTrue("Exception cause should be LogicViolationError", exception[0].getCause() instanceof LogicViolationError);
     }
 
-	@Test
-	public void testEventsOrder() throws LogicViolationError {
-		EasyFlow<StatefulContext> flow =
+    @Test
+    public void testEventsOrder() throws LogicViolationError {
+        EasyFlow<StatefulContext> flow =
 
-		    from(START).transit(
-				on(event_1).to(STATE_1).transit(
-                    on(event_2).finish(STATE_2),
-                    on(event_3).to(STATE_3).transit(
-                        on(event_4).to(STATE_1),
-                        on(event_5).finish(STATE_4)
-                    )
-                )
-		    );
+                from(START).transit(
+                        on(event_1).to(STATE_1).transit(
+                                on(event_2).finish(STATE_2),
+                                on(event_3).to(STATE_3).transit(
+                                        on(event_4).to(STATE_1),
+                                        on(event_5).finish(STATE_4)
+                                )
+                        )
+                );
 
-		final Collection<Integer> actualOrder = Collections.synchronizedCollection(new ArrayList<>());
+        final Collection<Integer> actualOrder = Collections.synchronizedCollection(new ArrayList<Integer>());
 
         flow
-		    .whenEnter(START, new ContextHandler<StatefulContext>() {
-                @Override
-                public void call(StatefulContext context) throws Exception {
-                    actualOrder.add(1);
-                    context.trigger(event_1);
-                }
-            })
-            .whenLeave(START, new ContextHandler<StatefulContext>() {
-                @Override
-                public void call(StatefulContext context) {
-                    actualOrder.add(2);
-                }
-            })
+                .whenEnter(START, new ContextHandler<StatefulContext>() {
+                    @Override
+                    public void call(StatefulContext context) throws Exception {
+                        actualOrder.add(1);
+                        context.trigger(event_1);
+                    }
+                })
+                .whenLeave(START, new ContextHandler<StatefulContext>() {
+                    @Override
+                    public void call(StatefulContext context) {
+                        actualOrder.add(2);
+                    }
+                })
 
-            .whenEnter(STATE_1, new ContextHandler<StatefulContext>() {
-                @Override
-                public void call(StatefulContext context) throws Exception {
-                    actualOrder.add(3);
-                    context.trigger(event_2);
-                }
-            }).whenLeave(STATE_1, new ContextHandler<StatefulContext>() {
-                @Override
-                public void call(StatefulContext context) {
-                    actualOrder.add(4);
-                }
-            })
+                .whenEnter(STATE_1, new ContextHandler<StatefulContext>() {
+                    @Override
+                    public void call(StatefulContext context) throws Exception {
+                        actualOrder.add(3);
+                        context.trigger(event_2);
+                    }
+                }).whenLeave(STATE_1, new ContextHandler<StatefulContext>() {
+            @Override
+            public void call(StatefulContext context) {
+                actualOrder.add(4);
+            }
+        })
 
-            .whenEnter(STATE_2, new ContextHandler<StatefulContext>() {
-                @Override
-                public void call(StatefulContext context) {
-                    actualOrder.add(5);
-                }
-            }).whenLeave(STATE_2, new ContextHandler<StatefulContext>() {
-                @Override
-                public void call(StatefulContext context) {
-                    throw new RuntimeException("It never leaves the final state");
-                }
-            })
+                .whenEnter(STATE_2, new ContextHandler<StatefulContext>() {
+                    @Override
+                    public void call(StatefulContext context) {
+                        actualOrder.add(5);
+                    }
+                }).whenLeave(STATE_2, new ContextHandler<StatefulContext>() {
+            @Override
+            public void call(StatefulContext context) {
+                throw new RuntimeException("It never leaves the final state");
+            }
+        })
 
-            .whenFinalState(new StateHandler<StatefulContext>() {
-                @Override
-                public void call(StateEnum state, StatefulContext context) {
-                    actualOrder.add(6);
-                }
-            });
+                .whenFinalState(new StateHandler<StatefulContext>() {
+                    @Override
+                    public void call(StateEnum state, StatefulContext context) {
+                        actualOrder.add(6);
+                    }
+                });
 
         StatefulContext ctx = new StatefulContext();
         flow.trace().start(ctx);
         ctx.awaitTermination();
 
-		int i = 0;
+        int i = 0;
         synchronized (actualOrder) {
             for (Integer order : actualOrder) {
                 i++;
@@ -141,11 +144,11 @@ public class RunSingleTest {
                 }
             }
         }
-	}
+    }
 
 
-	@Test
-	public void testEventsOrderTransitionCollection() throws LogicViolationError {
+    @Test
+    public void testEventsOrderTransitionCollection() throws LogicViolationError {
 
         RegularTransition t1 = RegularTransition.createSingleTransition(event_1, STATE_1, false);
         t1.setStateFrom(START);
@@ -162,7 +165,7 @@ public class RunSingleTest {
         RegularTransition t5 = RegularTransition.createSingleTransition(event_5, STATE_4, true);
         t5.setStateFrom(STATE_3);
 
-        List<Transition> transitions = asList(
+        List<Transition> transitions = Lists.<Transition>newArrayList(
                 t1, t2, t3, t4, t5
         );
 
@@ -241,29 +244,29 @@ public class RunSingleTest {
     public void testEventReuse() {
         EasyFlow<StatefulContext> flow =
 
-            from(START).transit(
-                on(event_1).to(STATE_1).transit(
-                    on(event_3).to(START)
-                ),
-                on(event_2).to(STATE_2).transit(
-                    on(event_2).finish(STATE_3),
-                    on(event_1).finish(STATE_4)
-                )
-            );
+                from(START).transit(
+                        on(event_1).to(STATE_1).transit(
+                                on(event_3).to(START)
+                        ),
+                        on(event_2).to(STATE_2).transit(
+                                on(event_2).finish(STATE_3),
+                                on(event_1).finish(STATE_4)
+                        )
+                );
 
         flow
-            .whenEnter(START, new ContextHandler<StatefulContext>() {
-                @Override
-                public void call(StatefulContext context) throws Exception {
-                    context.trigger(event_2);
-                }
-            })
-            .whenEnter(STATE_2, new ContextHandler<StatefulContext>() {
-                @Override
-                public void call(StatefulContext context) throws Exception {
-                    context.trigger(event_2);
-                }
-            });
+                .whenEnter(START, new ContextHandler<StatefulContext>() {
+                    @Override
+                    public void call(StatefulContext context) throws Exception {
+                        context.trigger(event_2);
+                    }
+                })
+                .whenEnter(STATE_2, new ContextHandler<StatefulContext>() {
+                    @Override
+                    public void call(StatefulContext context) throws Exception {
+                        context.trigger(event_2);
+                    }
+                });
 
         StatefulContext ctx = new StatefulContext();
         flow.trace().start(ctx);
@@ -276,36 +279,36 @@ public class RunSingleTest {
     public void testSyncExecutor() {
         EasyFlow<StatefulContext> flow =
 
-            from(START).transit(
-                on(event_1).to(STATE_1).transit(
-                    on(event_3).to(START)
-                ),
-                on(event_2).to(STATE_2).transit(
-                    on(event_2).finish(STATE_3),
-                    on(event_1).finish(STATE_4)
-                )
-            );
+                from(START).transit(
+                        on(event_1).to(STATE_1).transit(
+                                on(event_3).to(START)
+                        ),
+                        on(event_2).to(STATE_2).transit(
+                                on(event_2).finish(STATE_3),
+                                on(event_1).finish(STATE_4)
+                        )
+                );
 
         flow
-            .whenEnter(START, new ContextHandler<StatefulContext>() {
-                @Override
-                public void call(StatefulContext context) throws Exception {
-                    context.trigger(event_2);
-                }
-            })
-            .whenEnter(STATE_2, new ContextHandler<StatefulContext>() {
-                @Override
-                public void call(StatefulContext context) throws Exception {
-                    context.trigger(event_2);
-                }
-            });
+                .whenEnter(START, new ContextHandler<StatefulContext>() {
+                    @Override
+                    public void call(StatefulContext context) throws Exception {
+                        context.trigger(event_2);
+                    }
+                })
+                .whenEnter(STATE_2, new ContextHandler<StatefulContext>() {
+                    @Override
+                    public void call(StatefulContext context) throws Exception {
+                        context.trigger(event_2);
+                    }
+                });
 
 
         StatefulContext ctx = new StatefulContext();
         flow
-            .executor(new SyncExecutor())
-            .trace()
-            .start(ctx);
+                .executor(new SyncExecutor())
+                .trace()
+                .start(ctx);
 
         assertEquals("Final state", STATE_3, ctx.getStateValue());
     }

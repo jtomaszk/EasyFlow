@@ -5,28 +5,26 @@ import au.com.ds.ef.call.ExecutionErrorHandler;
 import au.com.ds.ef.call.StateHandler;
 import au.com.ds.ef.err.ExecutionError;
 import au.com.ds.ef.err.LogicViolationError;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.invoke.MethodHandles;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.stream.Collectors;
 
 import static au.com.ds.ef.HandlerCollection.EventType;
 
 /**
- *
  * Flow which only invokes actions registered when entering particular state.
  * Apart from that you can register generic action invoked upon error and termination.
- *
+ * <p>
  * Flow allows to have conditional steps.
- *
  */
-public class EnterFlow<C extends StatefulContext> implements Flow<C> {
+public class EnterFlow<C extends StatefulContext> extends Flow<C> {
 
-    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private static final Logger logger = LoggerFactory.getLogger(EnterFlow.class);
 
     public class DefaultErrorHandler implements ExecutionErrorHandler<StatefulContext> {
         @Override
@@ -61,9 +59,13 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
 
     public void processAllTransitions(boolean skipValidation) {
 
-        List<Transition> cTransitions = RegularTransition.Repository.consume().stream()
-                .filter(t -> t.getStateFrom() != null)
-                .collect(Collectors.toList());
+        List<Transition> cTransitions = FluentIterable.from(Transition.Repository.consume())
+                .filter(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getStateFrom() != null;
+                    }
+                }).toList();
 
         transitions = new TransitionCollection(cTransitions, !skipValidation);
     }
@@ -76,32 +78,32 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
         return transitions.getTransitions(stateFrom);
     }
 
-    public Flow<C> whenEnter(StateEnum state, ContextHandler<? extends C> onEnter) {
+    public EnterFlow<C> whenEnter(StateEnum state, ContextHandler<? extends C> onEnter) {
         handlers.setHandler(EventType.STATE_ENTER, state, null, onEnter);
         return this;
     }
 
-    public Flow<C> whenEnter(StateHandler<C> onEnter) {
+    public EnterFlow<C> whenEnter(StateHandler<C> onEnter) {
         handlers.setHandler(EventType.ANY_STATE_ENTER, null, null, onEnter);
         return this;
     }
 
-    public Flow<C> whenError(ExecutionErrorHandler<C> onError) {
+    public EnterFlow<C> whenError(ExecutionErrorHandler<C> onError) {
         handlers.setHandler(EventType.ERROR, null, null, onError);
         return this;
     }
 
-    public Flow<C> whenFinalState(StateHandler<C> onFinalState) {
+    public EnterFlow<C> whenFinalState(StateHandler<C> onFinalState) {
         handlers.setHandler(EventType.FINAL_STATE, null, null, onFinalState);
         return this;
     }
 
-    public Flow<C> executor(Executor executor) {
+    public EnterFlow<C> executor(Executor executor) {
         this.executor = executor;
         return this;
     }
 
-    public Flow<C> trace() {
+    public EnterFlow<C> trace() {
         trace = true;
         return this;
     }
@@ -135,16 +137,14 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
 
     /**
      * If condition state do not match current, no handlers will be invoked.
+     *
      * @param repetition - describe how many times we can try to change state
-     * @return false - when context terminated
-     * @return false - when current state is different than expected in condition
-     * @return false - when couldn't set a new condition - race condition
      * @return true - state changed, transtion scheduled
      * @throws LogicViolationError
      */
     boolean trigger(final EventEnum event, final C context, StateEnum condition, int repetition) throws LogicViolationError {
 
-        if (context.isTerminated()){
+        if (context.isTerminated()) {
             return false;
         }
 
@@ -164,9 +164,9 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
         try {
             if (context.getStateRef().compareAndSet(stateFrom, transition.getStateTo())) {
                 transit(transition.getStateTo(), context);
-            }else{
+            } else {
 
-                if(repetition>0){
+                if (repetition > 0) {
                     logger.info("Fail to change state due to parallel context change.");
                     return trigger(event, context, null, --repetition);
                 }
@@ -180,7 +180,12 @@ public class EnterFlow<C extends StatefulContext> implements Flow<C> {
 
     void transit(final StateEnum targetState, final C context) {
         if (!context.isTerminated()) {
-            executor.execute(() -> enter(targetState, context));
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    enter(targetState, context);
+                }
+            });
         }
     }
 

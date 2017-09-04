@@ -1,11 +1,14 @@
 package au.com.ds.ef;
 
 import au.com.ds.ef.err.DefinitionError;
-import org.junit.*;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Supplier;
 
 import static au.com.ds.ef.SubFlowTest.Events.*;
 import static au.com.ds.ef.SubFlowTest.States.*;
@@ -19,11 +22,11 @@ public class SubFlowTest {
     }
 
     public enum Events implements EventEnum {
-        a, s11,s22,sf, sf2, b, c, s1, s2, e, err, err2,bpInternalError, beReported, f
+        a, s11, s22, sf, sf2, b, c, s1, s2, e, err, err2, bpInternalError, beReported, f
     }
 
     @After
-    public void clean(){
+    public void clean() {
         ToHolder.resetDefaultTransitions();
         Transition.Repository.consume();
     }
@@ -67,14 +70,34 @@ public class SubFlowTest {
         flow.start(new StatefulContext());
 
         //assert
-        Assert.assertTrue(flow.getAvailableTransitions(A).stream()
-                .filter(t->t.getEvent()==sf && t.getStateTo()==SF).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
-                .filter(t->t.getEvent()==s1 && t.getStateTo()==I).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(E).stream()
-                .filter(t->t.getEvent()==s2 && t.getStateTo()==J).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
-                .filter(t->t.getEvent()==err && t.getStateTo()==END_ERR1).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(A))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == sf && t.getStateTo() == SF;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(C))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s1 && t.getStateTo() == I;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(E))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s2 && t.getStateTo() == J;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(C))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == err && t.getStateTo() == END_ERR1;
+                    }
+                }));
     }
 
     @Test
@@ -100,7 +123,7 @@ public class SubFlowTest {
         );
 
         Flow<StatefulContext> flow = FlowBuilder.EnterFlowBuilder.from(START, withDefaults).transit(
-                on(a,bpInternalError).to(A).transit(
+                on(a, bpInternalError).to(A).transit(
                         on(sf).subFlow(SUBFLOW).transit(
                                 on(s1, s2).to(I).transit(
                                         on(e).finish(END_1)
@@ -115,25 +138,60 @@ public class SubFlowTest {
         flow.start(new StatefulContext());
 
         //assert
-        Assert.assertTrue(flow.getAvailableTransitions(START).stream()
-                .filter(t->t.getEvent()==bpInternalError && t.getStateTo()==A).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(START).stream()
-                .filter(t->t.getEvent()==a && t.getStateTo()==A).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(A).stream()
-                .filter(t->t.getEvent()==sf && t.getStateTo()==SF).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
-                .filter(t->t.getEvent()==s1 && t.getStateTo()==I).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(E).stream()
-                .filter(t->t.getEvent()==s2 && t.getStateTo()==I).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
-                .filter(t->t.getEvent()==err && t.getStateTo()==END_ERR1).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(SF).stream()
-                .filter(t->t.getEvent()==s11 && t.getStateTo()==J).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(START))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == bpInternalError && t.getStateTo() == A;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(START))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == a && t.getStateTo() == A;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(A))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == sf && t.getStateTo() == SF;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(C))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s1 && t.getStateTo() == I;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(E))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s2 && t.getStateTo() == I;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(C))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == err && t.getStateTo() == END_ERR1;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(SF))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s11 && t.getStateTo() == J;
+                    }
+                }));
 
-        Assert.assertTrue(flow.getAvailableTransitions(C).stream().count()==5);
-        Assert.assertTrue(flow.getAvailableTransitions(E).stream().count()==4);
-        Assert.assertTrue(flow.getAvailableTransitions(SF).stream().count()==5);
-        Assert.assertTrue(flow.getAvailableTransitions(START).stream().count()==4);
+        Assert.assertTrue(flow.getAvailableTransitions(C).size() == 5);
+        Assert.assertTrue(flow.getAvailableTransitions(E).size() == 4);
+        Assert.assertTrue(flow.getAvailableTransitions(SF).size() == 5);
+        Assert.assertTrue(flow.getAvailableTransitions(START).size() == 4);
     }
 
     @Test
@@ -167,33 +225,78 @@ public class SubFlowTest {
         flow.start(new StatefulContext());
 
         //assert
-        Assert.assertTrue(flow.getAvailableTransitions(A).stream()
-                .filter(t->t.getEvent()==sf && t.getStateTo()==SF).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(A).stream()
-                .filter(t->t.getEvent()==b && t.getStateTo()==END_1).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(A).stream()
-                .filter(t->t.getEvent()==err && t.getStateTo()==END_2).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(A))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == sf && t.getStateTo() == SF;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(A))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == b && t.getStateTo() == END_1;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(A))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == err && t.getStateTo() == END_2;
+                    }
+                }));
 
-        Assert.assertTrue(flow.getAvailableTransitions(SF).stream()
-                .filter(t->t.getEvent()==c && t.getStateTo()==C).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(SF).stream()
-                .filter(t->t.getEvent()==err && t.getStateTo()==END_1).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(SF))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == c && t.getStateTo() == C;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(SF))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == err && t.getStateTo() == END_1;
+                    }
+                }));
 
-        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
-                .filter(t->t.getEvent()==s1 && t.getStateTo()==I).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
-                .filter(t->t.getEvent()==err && t.getStateTo()==END_ERR1).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(C))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s1 && t.getStateTo() == I;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(C))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == err && t.getStateTo() == END_ERR1;
+                    }
+                }));
 
-        Assert.assertTrue(flow.getAvailableTransitions(I).stream()
-                .filter(t->t.getEvent()==e && t.getStateTo()==END_1).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(I).stream()
-                .filter(t->t.getEvent()==err && t.getStateTo()==END_ERR1).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(I))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == e && t.getStateTo() == END_1;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(I))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == err && t.getStateTo() == END_ERR1;
+                    }
+                }));
 
 
-        Assert.assertTrue(flow.getAvailableTransitions(A).size()==3);
-        Assert.assertTrue(flow.getAvailableTransitions(SF).size()==2);
-        Assert.assertTrue(flow.getAvailableTransitions(C).size()==2);
-        Assert.assertTrue(flow.getAvailableTransitions(I).size()==2);
+        Assert.assertTrue(flow.getAvailableTransitions(A).size() == 3);
+        Assert.assertTrue(flow.getAvailableTransitions(SF).size() == 2);
+        Assert.assertTrue(flow.getAvailableTransitions(C).size() == 2);
+        Assert.assertTrue(flow.getAvailableTransitions(I).size() == 2);
     }
 
     @Test
@@ -235,18 +338,43 @@ public class SubFlowTest {
         flow.start(new StatefulContext());
 
         //assert
-        Assert.assertTrue(flow.getAvailableTransitions(A).stream()
-                .filter(t->t.getEvent()==sf && t.getStateTo()==SFN).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(C3).stream()
-                .filter(t->t.getEvent()==s1 && t.getStateTo()==I).findAny().isPresent());
-        Assert.assertTrue(flow.getAvailableTransitions(E3).stream()
-                .filter(t->t.getEvent()==s2 && t.getStateTo()==J).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(A))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == sf && t.getStateTo() == SFN;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(C3))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s1 && t.getStateTo() == I;
+                    }
+                }));
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(E3))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s2 && t.getStateTo() == J;
+                    }
+                }));
 
-        Assert.assertFalse(flow.getAvailableTransitions(C3).stream()
-                .filter(t->t.getEvent()==err || t.getEvent()==err2).findAny().isPresent());
+        Assert.assertFalse(FluentIterable.from(flow.getAvailableTransitions(C3))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == err || t.getEvent() == err2;
+                    }
+                }));
 
-        Assert.assertTrue(flow.getAvailableTransitions(J).stream()
-                .filter(t->t.getEvent()==err || t.getEvent()==err2).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(J))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == err || t.getEvent() == err2;
+                    }
+                }));
     }
 
     @Test
@@ -295,14 +423,29 @@ public class SubFlowTest {
         flow.start(new StatefulContext());
 
         //assert
-        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
-                .filter(t->t.getEvent()==s1 && t.getStateTo()==SF2).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(C))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s1 && t.getStateTo() == SF2;
+                    }
+                }));
 
-        Assert.assertTrue(flow.getAvailableTransitions(C2).stream()
-                .filter(t->t.getEvent()==s11 && t.getStateTo()==END_1).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(C2))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s11 && t.getStateTo() == END_1;
+                    }
+                }));
 
-        Assert.assertTrue(flow.getAvailableTransitions(E2).stream()
-                .filter(t->t.getEvent()==s22 && t.getStateTo()==END_2).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(E2))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s22 && t.getStateTo() == END_2;
+                    }
+                }));
     }
 
     @Test
@@ -345,14 +488,29 @@ public class SubFlowTest {
         flow.start(new StatefulContext());
 
         //assert
-        Assert.assertTrue(flow.getAvailableTransitions(A).stream()
-                .filter(t->t.getEvent()==sf && t.getStateTo()==SF).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(A))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == sf && t.getStateTo() == SF;
+                    }
+                }));
 
-        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
-                .filter(t->t.getEvent()==s1 && t.getStateTo()==SF3).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(C))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s1 && t.getStateTo() == SF3;
+                    }
+                }));
 
-        Assert.assertTrue(flow.getAvailableTransitions(F).stream()
-                .filter(t->t.getEvent()==e && t.getStateTo()==END_1).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(F))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == e && t.getStateTo() == END_1;
+                    }
+                }));
     }
 
     @Test(expected = DefinitionError.class)
@@ -398,7 +556,7 @@ public class SubFlowTest {
     }
 
     @Test
-    public void shouldWorkWithBackTo(){
+    public void shouldWorkWithBackTo() {
 
         //arrange
         IncompleteTransition SUBFLOWF = IncompleteTransition.from(SF3).transit(
@@ -420,15 +578,20 @@ public class SubFlowTest {
         flow.start(new StatefulContext());
 
         //assert
-        Assert.assertTrue(flow.getAvailableTransitions(B).stream()
-                .filter(t->t.getEvent()==c && t.getStateTo()==SF3).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(B))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == c && t.getStateTo() == SF3;
+                    }
+                }));
     }
 
     @Test
     public void shouldConnectSubFlowWithNonUniqueEventsWhenProvidedAsFunction() {
 
         //arrange
-        List<Transition> withDefaults = Arrays.asList(
+        final List<Transition> withDefaults = Arrays.asList(
                 on(err).finish(END_ERR1),
                 on(err2).finish(END_ERR2),
                 on(bpInternalError).to(RBE).transit(
@@ -436,23 +599,33 @@ public class SubFlowTest {
                 )
         );
 
-        Supplier<IncompleteTransition> SUBFLOW = ()-> IncompleteTransition.from(SF, withDefaults).transit(
-                on(c).to(C).transit(
-                        emit(s1),
-                        on(e).to(E).transit(
-                                emit(s2)
+        Supplier<IncompleteTransition> SUBFLOW = new Supplier<IncompleteTransition>() {
+            @Override
+            public IncompleteTransition get() {
+                return IncompleteTransition.from(SF, withDefaults).transit(
+                        on(c).to(C).transit(
+                                emit(s1),
+                                on(e).to(E).transit(
+                                        emit(s2)
+                                )
                         )
-                )
-        );
+                );
+            }
+        };
 
-        Supplier<IncompleteTransition> SUBFLOW2 = ()-> IncompleteTransition.from(SF2, withDefaults).transit(
-                on(c).to(C2).transit(
-                        emit(s1),
-                        on(e).to(E2).transit(
-                                emit(s2)
+        Supplier<IncompleteTransition> SUBFLOW2 = new Supplier<IncompleteTransition>() {
+            @Override
+            public IncompleteTransition get() {
+                return IncompleteTransition.from(SF2, withDefaults).transit(
+                        on(c).to(C2).transit(
+                                emit(s1),
+                                on(e).to(E2).transit(
+                                        emit(s2)
+                                )
                         )
-                )
-        );
+                );
+            }
+        };
 
         Flow<StatefulContext> flow = FlowBuilder.EnterFlowBuilder.from(START, withDefaults).transit(
                 on(a).to(A).transit(
@@ -471,17 +644,37 @@ public class SubFlowTest {
 
         //assert
 
-        Assert.assertTrue(flow.getAvailableTransitions(C).stream()
-                .filter(t->t.getEvent()==s1 && t.getStateTo()==SF2).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(C))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s1 && t.getStateTo() == SF2;
+                    }
+                }));
 
-        Assert.assertTrue(flow.getAvailableTransitions(E).stream()
-                .filter(t->t.getEvent()==s2 && t.getStateTo()==END_1).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(E))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s2 && t.getStateTo() == END_1;
+                    }
+                }));
 
-        Assert.assertTrue(flow.getAvailableTransitions(C2).stream()
-                .filter(t->t.getEvent()==s1 && t.getStateTo()==END_1).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(C2))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s1 && t.getStateTo() == END_1;
+                    }
+                }));
 
-        Assert.assertTrue(flow.getAvailableTransitions(E2).stream()
-                .filter(t->t.getEvent()==s2 && t.getStateTo()==END_2).findAny().isPresent());
+        Assert.assertTrue(FluentIterable.from(flow.getAvailableTransitions(E2))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s2 && t.getStateTo() == END_2;
+                    }
+                }));
     }
 
 
@@ -489,7 +682,7 @@ public class SubFlowTest {
     public void supplierSubFlowIsNotInvokedAtTheEnd() {
 
         //arrange
-        List<Transition> withDefaults = Arrays.asList(
+        final List<Transition> withDefaults = Arrays.asList(
                 on(err).finish(END_ERR1),
                 on(err2).finish(END_ERR2),
                 on(bpInternalError).to(RBE).transit(
@@ -497,11 +690,16 @@ public class SubFlowTest {
                 )
         );
 
-        Supplier<IncompleteTransition> SUBFLOW = ()-> IncompleteTransition.from(SF, withDefaults).transit(
-                on(c).to(C).transit(
-                        on(s1).finish(SF)
-                )
-        );
+        Supplier<IncompleteTransition> SUBFLOW = new Supplier<IncompleteTransition>() {
+            @Override
+            public IncompleteTransition get() {
+                return IncompleteTransition.from(SF, withDefaults).transit(
+                        on(c).to(C).transit(
+                                on(s1).finish(SF)
+                        )
+                );
+            }
+        };
 
         Flow<StatefulContext> flow = FlowBuilder.EnterFlowBuilder.from(START, withDefaults).transit(
                 on(a).to(A).transit(
@@ -514,7 +712,12 @@ public class SubFlowTest {
 
         //assert
 
-        Assert.assertFalse(flow.getAvailableTransitions(C).stream()
-                .filter(t->t.getEvent()==s1 && t.getStateTo()==SF).findAny().isPresent());
+        Assert.assertFalse(FluentIterable.from(flow.getAvailableTransitions(C))
+                .anyMatch(new Predicate<Transition>() {
+                    @Override
+                    public boolean apply(Transition t) {
+                        return t.getEvent() == s1 && t.getStateTo() == SF;
+                    }
+                }));
     }
 }

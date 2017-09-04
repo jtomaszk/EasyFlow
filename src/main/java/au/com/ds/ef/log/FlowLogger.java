@@ -7,5 +7,6 @@ package au.com.ds.ef.log;
  */
 public interface FlowLogger {
     void info(String message, Object... o);
+
     void error(String message, Throwable e);
 }
