@@ -10,7 +10,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.from;
 import static au.com.ds.ef.SynchronizationTest.Events.initialize;
 import static au.com.ds.ef.SynchronizationTest.Events.terminate;
-import static au.com.ds.ef.SynchronizationTest.States.*;
+import static au.com.ds.ef.SynchronizationTest.States.DONE;
+import static au.com.ds.ef.SynchronizationTest.States.RUNNING;
+import static au.com.ds.ef.SynchronizationTest.States.UNINITIALIZED;
 import static au.com.ds.ef.ToHolder.on;
 
 /**

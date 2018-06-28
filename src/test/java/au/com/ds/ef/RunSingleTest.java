@@ -16,10 +16,20 @@ import java.util.List;
 
 import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.from;
 import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.fromTransitions;
-import static au.com.ds.ef.RunSingleTest.Events.*;
-import static au.com.ds.ef.RunSingleTest.States.*;
+import static au.com.ds.ef.RunSingleTest.Events.event_1;
+import static au.com.ds.ef.RunSingleTest.Events.event_2;
+import static au.com.ds.ef.RunSingleTest.Events.event_3;
+import static au.com.ds.ef.RunSingleTest.Events.event_4;
+import static au.com.ds.ef.RunSingleTest.Events.event_5;
+import static au.com.ds.ef.RunSingleTest.States.START;
+import static au.com.ds.ef.RunSingleTest.States.STATE_1;
+import static au.com.ds.ef.RunSingleTest.States.STATE_2;
+import static au.com.ds.ef.RunSingleTest.States.STATE_3;
+import static au.com.ds.ef.RunSingleTest.States.STATE_4;
 import static au.com.ds.ef.ToHolder.on;
-import static junit.framework.TestCase.*;
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertNotNull;
+import static junit.framework.TestCase.assertTrue;
 
 public class RunSingleTest {
     public enum States implements StateEnum {

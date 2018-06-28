@@ -5,8 +5,17 @@ import org.junit.Test;
 
 import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.from;
 import static au.com.ds.ef.ToHolder.on;
-import static au.com.ds.ef.ValidationTest.Events.*;
-import static au.com.ds.ef.ValidationTest.States.*;
+import static au.com.ds.ef.ValidationTest.Events.event_1;
+import static au.com.ds.ef.ValidationTest.Events.event_2;
+import static au.com.ds.ef.ValidationTest.Events.event_3;
+import static au.com.ds.ef.ValidationTest.Events.event_4;
+import static au.com.ds.ef.ValidationTest.Events.event_5;
+import static au.com.ds.ef.ValidationTest.Events.event_6;
+import static au.com.ds.ef.ValidationTest.States.START;
+import static au.com.ds.ef.ValidationTest.States.STATE_1;
+import static au.com.ds.ef.ValidationTest.States.STATE_2;
+import static au.com.ds.ef.ValidationTest.States.STATE_3;
+import static au.com.ds.ef.ValidationTest.States.STATE_4;
 
 public class ValidationTest {
     public enum States implements StateEnum {

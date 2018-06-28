@@ -9,10 +9,33 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static au.com.ds.ef.FlowBuilder.EasyFlowBuilder.from;
-import static au.com.ds.ef.JsonArrayParserTest.Events.*;
-import static au.com.ds.ef.JsonArrayParserTest.States.*;
+import static au.com.ds.ef.JsonArrayParserTest.Events.arrayEnd;
+import static au.com.ds.ef.JsonArrayParserTest.Events.arrayStart;
+import static au.com.ds.ef.JsonArrayParserTest.Events.charProcessed;
+import static au.com.ds.ef.JsonArrayParserTest.Events.contentInvalid;
+import static au.com.ds.ef.JsonArrayParserTest.Events.contentValid;
+import static au.com.ds.ef.JsonArrayParserTest.Events.newChar;
+import static au.com.ds.ef.JsonArrayParserTest.Events.noMoreChars;
+import static au.com.ds.ef.JsonArrayParserTest.Events.space;
+import static au.com.ds.ef.JsonArrayParserTest.Events.unexpectedChar;
+import static au.com.ds.ef.JsonArrayParserTest.Events.valueContinue;
+import static au.com.ds.ef.JsonArrayParserTest.Events.valueEnd;
+import static au.com.ds.ef.JsonArrayParserTest.Events.valueStart;
+import static au.com.ds.ef.JsonArrayParserTest.States.CONTINUING_VALUE;
+import static au.com.ds.ef.JsonArrayParserTest.States.DONE;
+import static au.com.ds.ef.JsonArrayParserTest.States.ENDING_ARRAY;
+import static au.com.ds.ef.JsonArrayParserTest.States.ENDING_VALUE;
+import static au.com.ds.ef.JsonArrayParserTest.States.ERROR;
+import static au.com.ds.ef.JsonArrayParserTest.States.GETTING_CHAR;
+import static au.com.ds.ef.JsonArrayParserTest.States.PROCESSING_CHAR;
+import static au.com.ds.ef.JsonArrayParserTest.States.PROCESSING_SPACE;
+import static au.com.ds.ef.JsonArrayParserTest.States.STARTING_ARRAY;
+import static au.com.ds.ef.JsonArrayParserTest.States.STARTING_VALUE;
+import static au.com.ds.ef.JsonArrayParserTest.States.VALIDATING;
 import static au.com.ds.ef.ToHolder.on;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * User: andrey
